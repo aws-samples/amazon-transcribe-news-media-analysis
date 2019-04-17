@@ -1,0 +1,18 @@
+* {
+    font: 12px sans-serif;
+}
+h1 {
+    font-size: 18px;
+}
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+main {
+}
+
+#architecture {
+    width: 879px;
+    height: 440px;
+}

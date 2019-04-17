@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head>
+    <title>News Media Analysis</title>
+	<script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+	<link rel="stylesheet" href="./style.css">
+</head><body>
+	<header>
+		<video id="video" controls></video>
+		<table class="info">
+			<thead>
+				<tr><th colspan="2">Result</th></tr>
+			</thead>
+			<tbody>
+				<tr><th>Start</th><td id="resultStartTime"></td></tr>
+				<tr><th>End</th><td id="resultEndTime"></td></tr>
+				<tr><th>Type</th><td id="resultType"></td></tr>
+				<tr><th>Alts</th><td id="resultAlternatives"></td></tr>
+			</tbody>
+			<thead>
+				<tr><th colspan="2">Item</th></tr>
+			</thead>
+			<tbody>
+				<tr><th>Start</th><td id="itemStartTime"></td></tr>
+				<tr><th>End</th><td id="itemEndTime"></td></tr>
+			</tbody>
+			<thead>
+				<tr><th colspan="2">Transcript</th></tr>
+			</thead>
+			<tbody>
+				<tr><th>Start</th><td id="transcriptStartTime"></td></tr>
+				<tr><th>End</th><td id="transcriptEndTime"></td></tr>
+			</tbody>
+			<thead>
+				<tr><th colspan="2">Media</th></tr>
+			</thead>
+			<tbody>
+				<tr><th>Current</th><td id="mediaCurrentTime"></td></tr>
+			</tbody>
+		</table>
+	</header>
+	<main>
+		<section id="transcription"></section>
+	</main>
+	<footer>
+		<a href="/about/index.html">About</a>
+		<input id="autoplay" type="checkbox" checked autocomplete="off"><label for="autoplay">Autoplay</label>
+		<input id="autoscroll" type="checkbox" checked autocomplete="off"><label for="autoscroll">Autoscroll</label>
+	</footer>
+	<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+	<script src="./script.js"></script>
+</body></html>
