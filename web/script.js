@@ -255,8 +255,8 @@ function displayData(data) {
 }
 
 window.addEventListener('load', function() {
-	alert('The Demo is currently switched off. Please contact leeatk@ for more details.');
-	return;
+	// alert('The Demo is currently switched off. Please contact leeatk@ for more details.');
+	// return;
 	transcriptionElement = document.getElementById('transcription');
 	resultStartTimeElement = document.getElementById('resultStartTime');
 	resultEndTimeElement = document.getElementById('resultEndTime');
