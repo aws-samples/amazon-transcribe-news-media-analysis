@@ -1,0 +1,28 @@
+{
+  "name": "news-media-analysis",
+  "version": "1.0.0",
+  "description": "Transcribe news audio in realtime.",
+  "dependencies": {
+    "aws-amplify": "1.1.28",
+    "aws-amplify-react": "2.3.8"
+  },
+  "devDependencies": {
+    "babel-cli": "6.26.0",
+    "babel-core": "6.26.3",
+    "babel-loader": "7.1.5",
+    "babel-preset-env": "1.6.1",
+    "babel-preset-react": "6.24.1",
+    "copy-webpack-plugin": "4.6.0",
+    "css-loader": "1.0.1",
+    "react": "16.8.6",
+    "react-dom": "16.8.6",
+    "style-loader": "0.23.1",
+    "webpack": "4.17.1",
+    "webpack-cli": "3.3.2",
+    "webpack-dev-server": "3.4.1"
+  },
+  "scripts": {
+    "start": "webpack && webpack-dev-server --mode development",
+    "build": "webpack"
+  }
+}
