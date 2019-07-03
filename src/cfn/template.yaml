@@ -18,16 +18,6 @@ Outputs:
     Value: !Sub https://${WebUIBucket}.s3.amazonaws.com/index.html
     Description: WebUI URL
 Resources:
-  WebUIBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      CorsConfiguration:
-        CorsRules:
-        - AllowedHeaders: ['*']
-          AllowedMethods: [GET]
-          AllowedOrigins: ['*']
-          Id: MediaAnalysisCorsRule
-          MaxAge: 3600
   CognitoIdentityPool:
     Type: AWS::Cognito::IdentityPool
     Properties:
@@ -45,19 +35,6 @@ Resources:
     Properties:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-            Action:
-              - sts:AssumeRole
-  DbWriteRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -191,3 +168,13 @@ Resources:
               KeyType: RANGE
           Projection: 
             ProjectionType: ALL
+  WebUIBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders: ['*']
+          AllowedMethods: [GET]
+          AllowedOrigins: ['*']
+          Id: MediaAnalysisCorsRule
+          MaxAge: 3600
