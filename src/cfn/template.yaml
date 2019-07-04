@@ -1,0 +1,192 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Amazon Transcribe News Media Analysis (uksb-TODO)
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Environment:
+      Variables:
+        API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
+        COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
+        REGION: !Ref AWS::Region
+  Api:
+    Cors:
+      AllowMethods: "'*'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
+
+Outputs:
+  url:
+    Value: !Sub https://${WebUIBucket}.s3.amazonaws.com/index.html
+    Description: WebUI URL
+
+Resources:
+  ApiGatewayInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated:
+                - cognito-identity.amazonaws.com
+            Action:
+              - sts:AssumeRoleWithWebIdentity
+
+  CognitoIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: MediaAnalysisIdentityPool
+      AllowUnauthenticatedIdentities: true
+
+  CognitoIdentityPoolRole:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref CognitoIdentityPool
+      Roles:
+        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
+        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
+
+  DbReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  RestApi:
+    Type: AWS::Serverless::Api
+    Name: MediaAnalysisAPI
+    Properties:
+      StageName: PROD
+      EndpointConfiguration: REGIONAL
+      DefinitionBody:
+        swagger: 2.0
+        info:
+          version: 1.0
+          title: MediaAnalysisAPI
+        basePath: /PROD
+        paths:
+          /poll:
+            get:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                credentials: !GetAtt DbReadRole.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                    responseTemplates:
+                      application/json: |
+                        #set($inputRoot = $input.path('$'))
+                        {
+                          "fragments": [
+                            #foreach($elem in $inputRoot.Items) {
+                              "timestamp": $elem.FragmentTimestamp.N,
+                              "transcript": "$elem.Transcript.S",
+                              "isPartial": $elem.IsPartial.BOOL
+                            }#if($foreach.hasNext),#end
+                            #end
+                          ]
+                        }
+                requestTemplates:
+                  application/json: !Sub |
+                    {
+                      "TableName": "${TranscriptDynamoTable}",
+                      "IndexName": "MediaAnalysisLSI",
+                      "KeyConditionExpression": "VideoUrl = :vurl AND FragmentTimestamp BETWEEN :from AND :to",
+                      "ProjectionExpression": "FragmentTimestamp,Transcript,IsPartial",
+                      "ExpressionAttributeValues": {
+                        ":vurl": {
+                          "S": "$util.urlDecode($input.params().querystring.get('videoUrl'))"
+                        },
+                        ":from": {
+                          "N": "$input.params().querystring.get('from')"
+                        },
+                        ":to": {
+                          "N": "$input.params().querystring.get('to')"
+                        }
+                      }
+                    }
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws
+              security:
+              - sigv4: []
+        securityDefinitions:
+          sigv4:
+            type: apiKey
+            name: Authorization
+            in: header
+            x-amazon-apigateway-authtype: awsSigv4
+
+  TranscriptDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MediaAnalysisTranscript
+      AttributeDefinitions: 
+        - 
+          AttributeName: VideoUrl
+          AttributeType: S
+        - 
+          AttributeName: ResultId
+          AttributeType: S
+        - 
+          AttributeName: FragmentTimestamp
+          AttributeType: N
+      KeySchema: 
+        - 
+          AttributeName: VideoUrl
+          KeyType: HASH
+        - 
+          AttributeName: ResultId
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      LocalSecondaryIndexes: 
+        - 
+          IndexName: MediaAnalysisLSI
+          KeySchema: 
+            - 
+              AttributeName: VideoUrl
+              KeyType: HASH
+            - 
+              AttributeName: FragmentTimestamp
+              KeyType: RANGE
+          Projection: 
+            ProjectionType: ALL
+
+  WebUIBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders: ['*']
+          AllowedMethods: [GET]
+          AllowedOrigins: ['*']
+          Id: MediaAnalysisCorsRule
+          MaxAge: 3600
