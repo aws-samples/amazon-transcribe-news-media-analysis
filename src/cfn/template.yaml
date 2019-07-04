@@ -63,6 +63,20 @@ Resources:
             Action:
               - sts:AssumeRole
 
+  DbWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
   RestApi:
     Type: AWS::Serverless::Api
     Name: MediaAnalysisAPI
@@ -138,12 +152,167 @@ Resources:
                 type: aws
               security:
               - sigv4: []
+          /tasks:
+            get:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                credentials: !GetAtt DbReadRole.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Scan
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                    responseTemplates:
+                      application/json: |
+                        #set($inputRoot = $input.path('$'))
+                        {
+                          "tasks": [
+                            #foreach($elem in $inputRoot.Items) {
+                              "videoUrl": "$elem.VideoUrl.S",
+                              "taskStatus": "$elem.TaskStatus.S",
+                              "taskId": "$elem.TaskId.S"
+                            }#if($foreach.hasNext),#end
+                            #end
+                          ]
+                        }
+                requestTemplates:
+                  application/json: !Sub |
+                    {
+                      "TableName": "${TasksDynamoTable}",
+                      "ProjectionExpression": "VideoUrl, TaskStatus, TaskId"
+                    }
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws
+              security:
+              - sigv4: []
+          /tasks/{videoUrl}:
+            delete:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                credentials: !GetAtt DbWriteRole.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/DeleteItem
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                    responseTemplates:
+                      application/json: |
+                        {
+                          "ok": true
+                        }
+                requestTemplates:
+                  application/json: !Sub |
+                    {
+                      "TableName": "${TasksDynamoTable}",
+                      "Key": {
+                        "VideoUrl": {
+                          "S": "$util.urlDecode($input.params('videoUrl'))"
+                        }
+                      }
+                    }
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws
+              security:
+              - sigv4: []
+            put:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                credentials: !GetAtt DbWriteRole.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                    responseTemplates:
+                      application/json: |
+                        {
+                          "ok": true
+                        }
+                requestTemplates:
+                  application/json: !Sub |
+                    {
+                      "TableName": "${TasksDynamoTable}",
+                      "Item": {
+                        "VideoUrl": {
+                          "S": "$util.urlDecode($input.params('videoUrl'))"
+                        },
+                        "TaskStatus": {
+                          "S": "WAITING"
+                        }
+                      }
+                    }
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws
+              security:
+              - sigv4: []
         securityDefinitions:
           sigv4:
             type: apiKey
             name: Authorization
             in: header
             x-amazon-apigateway-authtype: awsSigv4
+
+  TasksDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MediaAnalysisTasks
+      AttributeDefinitions: 
+        - 
+          AttributeName: VideoUrl
+          AttributeType: S
+      KeySchema: 
+        - 
+          AttributeName: VideoUrl
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
 
   TranscriptDynamoTable:
     Type: AWS::DynamoDB::Table
