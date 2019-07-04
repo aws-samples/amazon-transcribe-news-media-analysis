@@ -123,7 +123,7 @@ Resources:
                       "ProjectionExpression": "FragmentTimestamp,Transcript,IsPartial",
                       "ExpressionAttributeValues": {
                         ":vurl": {
-                          "S": "$input.params().querystring.get('videoUrl')"
+                          "S": "$util.urlDecode($input.params().querystring.get('videoUrl'))"
                         },
                         ":from": {
                           "N": "$input.params().querystring.get('from')"
