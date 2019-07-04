@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon Transcribe News Media Analysis (uksb-TODO)
 Transform: AWS::Serverless-2016-10-31
+
 Globals:
   Function:
     Environment:
@@ -13,36 +14,13 @@ Globals:
       AllowMethods: "'*'"
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       AllowOrigin: "'*'"
+
 Outputs:
   url:
     Value: !Sub https://${WebUIBucket}.s3.amazonaws.com/index.html
     Description: WebUI URL
+
 Resources:
-  CognitoIdentityPool:
-    Type: AWS::Cognito::IdentityPool
-    Properties:
-      IdentityPoolName: MediaAnalysisIdentityPool
-      AllowUnauthenticatedIdentities: true
-  CognitoIdentityPoolRole:
-    Type: AWS::Cognito::IdentityPoolRoleAttachment
-    Properties:
-      IdentityPoolId: !Ref CognitoIdentityPool
-      Roles:
-        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
-        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
-  DbReadRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-            Action:
-              - sts:AssumeRole
   ApiGatewayInvokeRole:
     Type: AWS::IAM::Role
     Properties:
@@ -56,6 +34,35 @@ Resources:
                 - cognito-identity.amazonaws.com
             Action:
               - sts:AssumeRoleWithWebIdentity
+
+  CognitoIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: MediaAnalysisIdentityPool
+      AllowUnauthenticatedIdentities: true
+
+  CognitoIdentityPoolRole:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref CognitoIdentityPool
+      Roles:
+        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
+        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
+
+  DbReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
   RestApi:
     Type: AWS::Serverless::Api
     Name: MediaAnalysisAPI
@@ -112,14 +119,17 @@ Resources:
                     {
                       "TableName": "${TranscriptDynamoTable}",
                       "IndexName": "MediaAnalysisLSI",
-                      "KeyConditionExpression": "VideoUrl = :vurl AND FragmentTimestamp >= :ts",
+                      "KeyConditionExpression": "VideoUrl = :vurl AND FragmentTimestamp BETWEEN :from AND :to",
                       "ProjectionExpression": "FragmentTimestamp,Transcript,IsPartial",
                       "ExpressionAttributeValues": {
                         ":vurl": {
                           "S": "$input.params().querystring.get('videoUrl')"
                         },
-                        ":ts": {
-                          "N": "$input.params().querystring.get('timestamp')"
+                        ":from": {
+                          "N": "$input.params().querystring.get('from')"
+                        },
+                        ":to": {
+                          "N": "$input.params().querystring.get('to')"
                         }
                       }
                     }
@@ -134,6 +144,7 @@ Resources:
             name: Authorization
             in: header
             x-amazon-apigateway-authtype: awsSigv4
+
   TranscriptDynamoTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -168,6 +179,7 @@ Resources:
               KeyType: RANGE
           Projection: 
             ProjectionType: ALL
+
   WebUIBucket:
     Type: AWS::S3::Bucket
     Properties:
