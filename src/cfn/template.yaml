@@ -194,7 +194,8 @@ Resources:
                   application/json: !Sub |
                     {
                       "TableName": "${TasksDynamoTable}",
-                      "ProjectionExpression": "VideoUrl, TaskStatus, TaskId"
+                      "ProjectionExpression": "VideoUrl, TaskStatus, TaskId",
+                      "ConsistentRead": true
                     }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
