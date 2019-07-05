@@ -8,12 +8,20 @@ Globals:
       Variables:
         API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
         COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
+        FROM_BUCKET: media-analysis-demo
+        MAX_TASKS: !Ref MaxTasksCapacity
         REGION: !Ref AWS::Region
+        TO_BUCKET: !Ref WebUIBucket
   Api:
     Cors:
       AllowMethods: "'*'"
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       AllowOrigin: "'*'"
+
+Parameters:
+  MaxTasksCapacity:
+    Type: Number
+    Default: 10
 
 Outputs:
   url:
@@ -34,6 +42,32 @@ Resources:
                 - cognito-identity.amazonaws.com
             Action:
               - sts:AssumeRoleWithWebIdentity
+
+  CustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: MediaAnalysis-setup-S3-fc
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action: 's3:*'
+              Resource: '*'
+        - PolicyName: MediaAnalysis-cloudwatch-logs
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action: 'logs:*'
+              Resource: 'arn:aws:logs:*:*:*'
 
   CognitoIdentityPool:
     Type: AWS::Cognito::IdentityPool
@@ -76,6 +110,18 @@ Resources:
                 - apigateway.amazonaws.com
             Action:
               - sts:AssumeRole
+
+  LambdaSetup:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: MediaAnalysisSetup
+      Runtime: nodejs8.10
+      Handler: index.handler
+      CodeUri: ../functions/setup/
+      Description: Custom Lambda resource for the Media Analysis Cloudformation Stack
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt CustomResourceRole.Arn
 
   RestApi:
     Type: AWS::Serverless::Api
@@ -349,6 +395,12 @@ Resources:
               KeyType: RANGE
           Projection: 
             ProjectionType: ALL
+
+  SetupWebUI:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt LambdaSetup.Arn
+      Region: !Ref AWS::Region
 
   WebUIBucket:
     Type: AWS::S3::Bucket
