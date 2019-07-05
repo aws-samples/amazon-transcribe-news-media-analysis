@@ -10,8 +10,7 @@
     "deploy": "npm run build && rain deploy templates/template.yaml MediaAnalysis",
     "lambda-build": "cd src/functions/setup && npm run build",
     "lambda-inline": "cd src/functions/setup && npm run inline",
-    "postinstall": "cd src/functions/setup && npm i",
-    "test": "cfn-lint templates/template.yaml"
+    "postinstall": "cd src/functions/setup && npm i"
   },
   "repository": {
     "type": "git",
