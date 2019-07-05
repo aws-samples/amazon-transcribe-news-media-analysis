@@ -1,0 +1,24 @@
+{
+  "name": "amazon-transcribe-news-media-analysis",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run lambda-build && npm run cfn-build",
+    "cfn-build": "npm run cfn-package && npm run lambda-inline",
+    "cfn-ensure-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
+    "cfn-package": "npm run cfn-ensure-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml",
+    "deploy": "npm run build && rain deploy templates/template.yaml MediaAnalysis",
+    "lambda-build": "cd src/functions/setup && npm run build",
+    "lambda-inline": "cd src/functions/setup && npm run inline",
+    "postinstall": "cd src/functions/setup && npm i",
+    "test": "cfn-lint templates/template.yaml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aws-samples/amazon-transcribe-news-media-analysis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aws-samples/amazon-transcribe-news-media-analysis/issues"
+  },
+  "homepage": "https://github.com/aws-samples/amazon-transcribe-news-media-analysis#readme"
+}
