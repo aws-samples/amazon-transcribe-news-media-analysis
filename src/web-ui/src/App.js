@@ -26,6 +26,8 @@ export default () => {
     }
   });
 
+  const currentLocation = window.location.href;
+
   return (
     <div className="App">
       <Header />
@@ -38,7 +40,7 @@ export default () => {
                 e.preventDefault();
                 window.location.reload();
               }}
-              href="#"
+              href={currentLocation}
             >
               refresh
             </a>{" "}
