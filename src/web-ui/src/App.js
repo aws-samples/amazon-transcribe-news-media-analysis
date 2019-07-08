@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Container } from "react-bootstrap";
+import { Alert, Container } from "react-bootstrap";
 
 import gateway from "./utils/gateway";
 import { sortByKey } from "./utils";
@@ -9,13 +9,15 @@ import Videos from "./components/Videos";
 
 export default () => {
   const [tasks, setTasks] = useState([]);
+  const [errorShown, showError] = useState(false);
   const tasksUpdated = useRef(false);
 
   const updateTasks = () => {
     tasksUpdated.current = true;
-    gateway.getTasks().then(r => {
-      setTasks(sortByKey(r.tasks, "videoUrl"));
-    });
+    gateway
+      .getTasks()
+      .then(r => setTasks(sortByKey(r.tasks, "videoUrl")))
+      .catch(() => showError(true));
   };
 
   useEffect(() => {
@@ -28,10 +30,26 @@ export default () => {
     <div className="App">
       <Header />
       <Container>
+        {errorShown && (
+          <Alert variant="danger">
+            <strong>Oh snap!</strong> Something wrong happened. Please{" "}
+            <a
+              onClick={e => {
+                e.preventDefault();
+                window.location.reload();
+              }}
+              href="#"
+            >
+              refresh
+            </a>{" "}
+            and retry.
+          </Alert>
+        )}
         <Videos
-          tasks={tasks}
           addTask={gateway.createTask}
           deleteTask={gateway.deleteTask}
+          onError={() => showError(true)}
+          tasks={tasks}
           updateTasks={updateTasks}
         />
       </Container>
