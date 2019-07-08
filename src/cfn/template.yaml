@@ -266,7 +266,7 @@ Resources:
                       type: string
               x-amazon-apigateway-integration:
                 credentials: !GetAtt DbWriteRole.Arn
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/DeleteItem
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem
                 responses:
                   default:
                     statusCode: "200"
@@ -282,9 +282,12 @@ Resources:
                   application/json: !Sub |
                     {
                       "TableName": "${TasksDynamoTable}",
-                      "Key": {
+                      "Item": {
                         "VideoUrl": {
                           "S": "$util.urlDecode($input.params('videoUrl'))"
+                        },
+                        "TaskStatus": {
+                          "S": "TERMINATING"
                         }
                       }
                     }
