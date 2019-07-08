@@ -10,7 +10,7 @@ export default ({ onConfirm, onDeleted, onHide }) => {
     setDeleting(true);
 
     const afterDeletion = () => {
-      showConfirmation(false);
+      hideModal();
       setDeleting(false);
       onDeleted();
     };

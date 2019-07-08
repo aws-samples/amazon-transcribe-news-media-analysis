@@ -11,8 +11,8 @@ const statusTooltips = {
     "The task for processing the video is in a faulty state and waiting for being re-allocated",
   INITIALIZING:
     "The task for processing the video has been allocated, and the job will start processing soon",
-  PROCESSING: "The video is been processed",
-  TERMINATING: "The task for processing the video is scheduled for termination",
+  PROCESSING: "The video is being processed",
+  TERMINATING: "The task for processing the video has been scheduled for termination",
   WAITING:
     "The video is waiting for a task to be allocated, in order to start processing"
 };
@@ -34,6 +34,7 @@ export default ({ deleteTask, onDeleted, tasks }) => (
             <a
               href={task.videoUrl}
               target="_blank"
+              rel="noopener noreferrer"
               style={{ color: "white", textDecoration: "underline" }}
             >
               {task.videoUrl}
