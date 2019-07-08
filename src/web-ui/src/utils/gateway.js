@@ -1,17 +1,16 @@
 import request from "./request";
 
 export default {
-  createTask(videoUrl){
+  createTask(videoUrl) {
     const encodedVideoUrl = encodeURIComponent(videoUrl.trim());
-    return request(`/tasks/${encodedVideoUrl}`, 'put')
+    return request(`/tasks/${encodedVideoUrl}`, "put");
   },
 
-
-  deleteTask(videoUrl){
+  deleteTask(videoUrl) {
     const encodedVideoUrl = encodeURIComponent(videoUrl.trim());
-    return request(`/tasks/${encodedVideoUrl}`, 'del')
+    return request(`/tasks/${encodedVideoUrl}`, "del");
   },
-  
+
   getTasks() {
     return request("/tasks");
   }
