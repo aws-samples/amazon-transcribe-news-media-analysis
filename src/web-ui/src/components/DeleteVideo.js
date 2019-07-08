@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Modal, Spinner } from "react-bootstrap";
 
-export default ({ onConfirm, onDeleted, onHide }) => {
+export default ({ onConfirm, onDeleted }) => {
   const [confirmationShown, showConfirmation] = useState(false);
   const [deleting, setDeleting] = useState(false);
 

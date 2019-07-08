@@ -1,6 +1,7 @@
 import React from "react";
-import { Button, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
+import { OverlayTrigger, Table, Tooltip } from "react-bootstrap";
 
+import AddVideo from "./AddVideo";
 import DeleteVideo from "./DeleteVideo";
 import WatchUrlTextbox from "./WatchUrlTextbox";
 
@@ -12,12 +13,13 @@ const statusTooltips = {
   INITIALIZING:
     "The task for processing the video has been allocated, and the job will start processing soon",
   PROCESSING: "The video is being processed",
-  TERMINATING: "The task for processing the video has been scheduled for termination",
+  TERMINATING:
+    "The task for processing the video has been scheduled for termination",
   WAITING:
     "The video is waiting for a task to be allocated, in order to start processing"
 };
 
-export default ({ deleteTask, onDeleted, tasks }) => (
+export default ({ addTask, deleteTask, onTasksChange, tasks }) => (
   <Table variant="dark" style={{ marginTop: "20px" }}>
     <thead>
       <tr>
@@ -60,7 +62,7 @@ export default ({ deleteTask, onDeleted, tasks }) => (
             {task.taskStatus === "PROCESSING" && (
               <DeleteVideo
                 onConfirm={() => deleteTask(task.videoUrl)}
-                onDeleted={onDeleted}
+                onDeleted={onTasksChange}
               />
             )}
           </td>
@@ -72,9 +74,11 @@ export default ({ deleteTask, onDeleted, tasks }) => (
           <td />
           <td />
           <td>
-            <Button size="sm" variant="success">
-              Add New...
-            </Button>
+            <AddVideo
+              onAdded={onTasksChange}
+              onSubmit={addTask}
+              tasks={tasks}
+            />
           </td>
         </tr>
       )}
