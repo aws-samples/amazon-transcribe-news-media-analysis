@@ -19,8 +19,8 @@ const statusTooltips = {
     "The video is waiting for a task to be allocated, in order to start processing"
 };
 
-export default ({ addTask, deleteTask, tasks, updateTasks }) => (
-  <Table variant="dark" style={{ marginTop: "20px" }}>
+export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
+  <Table variant="dark">
     <thead>
       <tr>
         <th>Video URL</th>
@@ -67,6 +67,7 @@ export default ({ addTask, deleteTask, tasks, updateTasks }) => (
               <DeleteVideo
                 onConfirm={() => deleteTask(task.videoUrl)}
                 onDeleted={updateTasks}
+                onError={onError}
               />
             )}
           </td>
@@ -78,7 +79,12 @@ export default ({ addTask, deleteTask, tasks, updateTasks }) => (
           <td />
           <td />
           <td>
-            <AddVideo onAdded={updateTasks} onSubmit={addTask} tasks={tasks} />
+            <AddVideo
+              onAdded={updateTasks}
+              onError={onError}
+              onSubmit={addTask}
+              tasks={tasks}
+            />
           </td>
         </tr>
       )}

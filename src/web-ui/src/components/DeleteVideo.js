@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Modal, Spinner } from "react-bootstrap";
 
-export default ({ onConfirm, onDeleted }) => {
+export default ({ onConfirm, onDeleted, onError }) => {
   const [confirmationShown, showConfirmation] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -15,9 +15,14 @@ export default ({ onConfirm, onDeleted }) => {
       onDeleted();
     };
 
+    const withError = () => {
+      afterDeletion();
+      onError();
+    }
+
     return onConfirm()
       .then(afterDeletion)
-      .catch(afterDeletion);
+      .catch(withError);
   };
 
   return (

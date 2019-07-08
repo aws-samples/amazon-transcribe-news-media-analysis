@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Form, Modal, Spinner } from "react-bootstrap";
 
-export default ({ onSubmit, onAdded, tasks }) => {
+export default ({ onSubmit, onAdded, onError, tasks }) => {
   const [addModalShown, showAddModal] = useState(false);
   const [adding, setAdding] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
@@ -16,9 +16,14 @@ export default ({ onSubmit, onAdded, tasks }) => {
       onAdded();
     };
 
+    const withError = () => {
+      afterAdding();
+      onError();
+    };
+
     return onSubmit(videoUrl)
       .then(afterAdding)
-      .catch(afterAdding);
+      .catch(withError);
   };
 
   const videoAlreadyPresent = () =>

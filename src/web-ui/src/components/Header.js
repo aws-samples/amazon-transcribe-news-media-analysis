@@ -2,7 +2,10 @@ import React from "react";
 import { Container, Nav, Navbar } from "react-bootstrap";
 
 export default () => (
-  <Navbar style={{ backgroundColor: "#000" }} variant="dark">
+  <Navbar
+    style={{ backgroundColor: "#000", marginBottom: "20px" }}
+    variant="dark"
+  >
     <Container>
       <Navbar.Brand>Amazon Transcribe News Media Analysis</Navbar.Brand>
       <Navbar.Toggle />
