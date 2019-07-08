@@ -25,39 +25,41 @@ export default ({ videoUrl }) => {
   };
 
   return (
-    <Form.Group>
-      <Form.Control
-        onClick={e => e.target.select()}
-        readOnly
-        ref={e => (textbox.current = e)}
-        size="sm"
-        style={{ width: "80%", float: "left" }}
-        value={watchUrl}
-      />
-      <OverlayTrigger
-        key="copy"
-        placement="bottom"
-        overlay={
-          <Tooltip id="tooltip-copy">
-            {copied ? <strong>Copied!</strong> : "Copy to clipboard"}
-          </Tooltip>
-        }
-      >
-        <Button onClick={copyToClipboard} variant="outline-dark">
-          <Icon type="copy" />
-        </Button>
-      </OverlayTrigger>
-      <OverlayTrigger
-        key="new-window"
-        placement="bottom"
-        overlay={
-          <Tooltip id="tooltip-new-window">Open in a new window</Tooltip>
-        }
-      >
-        <Button onClick={openInNewWindow} variant="outline-dark">
-          <Icon type="new-window" />
-        </Button>
-      </OverlayTrigger>
-    </Form.Group>
+    <nobr>
+      <Form.Group>
+        <Form.Control
+          onClick={e => e.target.select()}
+          readOnly
+          ref={e => (textbox.current = e)}
+          size="sm"
+          style={{ width: "80%", float: "left" }}
+          value={watchUrl}
+        />
+        <OverlayTrigger
+          key="copy"
+          placement="bottom"
+          overlay={
+            <Tooltip id="tooltip-copy">
+              {copied ? <strong>Copied!</strong> : "Copy to clipboard"}
+            </Tooltip>
+          }
+        >
+          <Button onClick={copyToClipboard} variant="outline-dark">
+            <Icon type="copy" />
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger
+          key="new-window"
+          placement="bottom"
+          overlay={
+            <Tooltip id="tooltip-new-window">Open in a new window</Tooltip>
+          }
+        >
+          <Button onClick={openInNewWindow} variant="outline-dark">
+            <Icon type="new-window" />
+          </Button>
+        </OverlayTrigger>
+      </Form.Group>
+    </nobr>
   );
 };
