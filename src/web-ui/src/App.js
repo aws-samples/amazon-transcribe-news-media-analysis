@@ -30,8 +30,9 @@ export default () => {
       <Container>
         <Videos
           tasks={tasks}
+          addTask={gateway.createTask}
           deleteTask={gateway.deleteTask}
-          onDeleted={updateTasks}
+          onTasksChange={updateTasks}
         />
       </Container>
     </div>
