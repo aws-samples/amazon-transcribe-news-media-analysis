@@ -32,7 +32,7 @@ export default () => {
           tasks={tasks}
           addTask={gateway.createTask}
           deleteTask={gateway.deleteTask}
-          onTasksChange={updateTasks}
+          updateTasks={updateTasks}
         />
       </Container>
     </div>
