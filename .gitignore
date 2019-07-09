@@ -2,9 +2,9 @@
 dist
 node_modules
 npm-debug.log*
-src/web-ui/build
-src/web-ui/dist
-src/web-ui/public/settings.js
+src/frontend/build
+src/frontend/dist
+src/frontend/public/settings.js
 package-lock.json
 templates
 yarn.lock

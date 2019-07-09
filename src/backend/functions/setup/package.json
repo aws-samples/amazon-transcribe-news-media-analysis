@@ -5,8 +5,8 @@
   "description": "Setup the static S3 files",
   "main": "index.js",
   "scripts": {
-    "build": "webpack-cli --config ./build/webpack.js && uglifyjs ./dist/setup.js -o ./dist/setup.min.js -c -m",
-    "inline": "node ./build/inline.js"
+    "build": "webpack-cli --config build/webpack.js && uglifyjs ./dist/setup.js -o ./dist/setup.min.js -c -m",
+    "inline": "node build/inline.js"
   },
   "dependencies": {
     "aws-sdk": "2.369.0"
