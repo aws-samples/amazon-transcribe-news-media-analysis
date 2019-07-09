@@ -8,12 +8,12 @@
     "cfn-ensure-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
     "cfn-package": "npm run cfn-ensure-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml",
     "deploy": "npm run build && rain deploy templates/template.yaml MediaAnalysis",
-    "lambda-build": "cd src/functions/setup && npm run build",
-    "lambda-inline": "cd src/functions/setup && npm run inline",
-    "postinstall": "cd src/web-ui && npm i && cd ../functions/setup && npm i",
-    "start": "cd src/web-ui && npm start",
-    "webui-build": "cd src/web-ui && npm run build",
-    "webui-deploy": "cd src/web-ui/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
+    "lambda-build": "cd src/backend/functions/setup && npm run build",
+    "lambda-inline": "cd src/backend/functions/setup && npm run inline",
+    "postinstall": "cd src/frontend && npm i && cd ../backend/functions/setup && npm i",
+    "start": "cd src/frontend && npm start",
+    "webui-build": "cd src/frontend && npm run build",
+    "webui-deploy": "cd src/frontend/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
     "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive"
   },
   "repository": {
