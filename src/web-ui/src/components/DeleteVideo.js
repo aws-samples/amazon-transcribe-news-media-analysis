@@ -18,7 +18,7 @@ export default ({ onConfirm, onDeleted, onError }) => {
     const withError = () => {
       afterDeletion();
       onError();
-    }
+    };
 
     return onConfirm()
       .then(afterDeletion)
@@ -41,8 +41,8 @@ export default ({ onConfirm, onDeleted, onError }) => {
           <Modal.Title>Are you sure?</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          After deletion, the processing task will be scheduled for being
-          removed. The process may take a couple of minutes. <br />
+          After deletion, the processing task will be scheduled for removal. The
+          process may take a couple of minutes. <br />
           <br /> <strong>Do you wish to continue?</strong>
         </Modal.Body>
         <Modal.Footer>

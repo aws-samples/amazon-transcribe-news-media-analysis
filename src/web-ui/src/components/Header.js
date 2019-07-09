@@ -16,7 +16,7 @@ export default () => (
             href="https://github.com/aws-samples/amazon-transcribe-news-media-analysis"
             target="_blank"
           >
-            Fork me in github
+            Fork me on github
           </Nav.Link>
         </Nav>
         <Nav style={{ paddingTop: "8px" }} />

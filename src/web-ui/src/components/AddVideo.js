@@ -26,10 +26,8 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
       .catch(withError);
   };
 
-  const videoAlreadyPresent = () =>
-    !!tasks.find(x => x.videoUrl.trim() === videoUrl.trim());
-
-  const isValid = videoUrl.indexOf("http") === 0 && !videoAlreadyPresent();
+  const videoAlreadyPresent = !!tasks[videoUrl.trim()];
+  const isValid = videoUrl.indexOf("http") === 0 && !videoAlreadyPresent;
 
   const textboxValidationAttributes = isValid
     ? { isValid: true }
