@@ -5,6 +5,8 @@ import AddVideo from "./AddVideo";
 import DeleteVideo from "./DeleteVideo";
 import WatchUrlTextbox from "./WatchUrlTextbox";
 
+import { toObj } from "../utils";
+
 const { maxTasks } = window.mediaAnalysisSettings;
 
 const statusTooltips = {
@@ -83,7 +85,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
               onAdded={updateTasks}
               onError={onError}
               onSubmit={addTask}
-              tasks={tasks}
+              tasks={toObj(tasks, "videoUrl")}
             />
           </td>
         </tr>
