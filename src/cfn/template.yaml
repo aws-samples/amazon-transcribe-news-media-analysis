@@ -266,7 +266,7 @@ Resources:
                       type: string
               x-amazon-apigateway-integration:
                 credentials: !GetAtt DbWriteRole.Arn
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/DeleteItem
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/UpdateItem
                 responses:
                   default:
                     statusCode: "200"
@@ -286,7 +286,13 @@ Resources:
                         "VideoUrl": {
                           "S": "$util.urlDecode($input.params('videoUrl'))"
                         }
-                      }
+                      },
+                      "UpdateExpression": "set TaskStatus = :newStatus",
+                      "ExpressionAttributeValues": {
+                        ":newStatus": {
+                          "S": "TERMINATING"
+                        }
+                      }                      
                     }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
