@@ -8,3 +8,4 @@ src/frontend/public/settings.js
 package-lock.json
 templates
 yarn.lock
+.idea
