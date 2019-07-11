@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { Alert, Container } from "react-bootstrap";
 
 import gateway from "./utils/gateway";
-import { sortByKey } from "./utils";
+import { getUrlParameter, sortByKey } from "./utils";
 
 import Header from "./components/Header";
+import Video from "./components/Video";
 import Videos from "./components/Videos";
 
 export default () => {
@@ -27,6 +28,8 @@ export default () => {
   });
 
   const currentLocation = window.location.href;
+  const videoUrl = getUrlParameter("watchUrl");
+  const watchMode = videoUrl !== "";
 
   return (
     <div className="App">
@@ -47,13 +50,17 @@ export default () => {
             and retry.
           </Alert>
         )}
-        <Videos
-          addTask={gateway.createTask}
-          deleteTask={gateway.deleteTask}
-          onError={() => showError(true)}
-          tasks={tasks}
-          updateTasks={updateTasks}
-        />
+        {watchMode ? (
+          <Video videoUrl={videoUrl} />
+        ) : (
+          <Videos
+            addTask={gateway.createTask}
+            deleteTask={gateway.deleteTask}
+            onError={() => showError(true)}
+            tasks={tasks}
+            updateTasks={updateTasks}
+          />
+        )}
       </Container>
     </div>
   );
