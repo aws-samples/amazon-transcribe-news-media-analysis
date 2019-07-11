@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Amazon Transcribe News Media Analysis (uksb-TODO)
+Description: Amazon Transcribe News Media Analysis (uksb-1potrt4cg)
 Transform: AWS::Serverless-2016-10-31
 
 Globals:
