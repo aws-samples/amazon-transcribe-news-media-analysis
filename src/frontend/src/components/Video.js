@@ -69,7 +69,6 @@ export default ({ getTask, poll, videoUrl }) => {
       const options = {
         autoplay: true,
         controls: true,
-        muted: true,
         sources: [{ src: videoUrl }]
       };
 
