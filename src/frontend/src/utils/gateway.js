@@ -1,17 +1,25 @@
 import request from "./request";
 
+const encoded = videoUrl => encodeURIComponent(videoUrl.trim());
+
 export default {
   createTask(videoUrl) {
-    const encodedVideoUrl = encodeURIComponent(videoUrl.trim());
-    return request(`/tasks/${encodedVideoUrl}`, "put");
+    return request(`/tasks/${encoded(videoUrl)}`, "put");
   },
 
   deleteTask(videoUrl) {
-    const encodedVideoUrl = encodeURIComponent(videoUrl.trim());
-    return request(`/tasks/${encodedVideoUrl}`, "del");
+    return request(`/tasks/${encoded(videoUrl)}`, "del");
+  },
+
+  getTask(videoUrl) {
+    return request(`/tasks/${encoded(videoUrl)}`);
   },
 
   getTasks() {
     return request("/tasks");
+  },
+
+  poll(videoUrl, from, to) {
+    return request(`/poll?videoUrl=${encoded(videoUrl)}&from=${from}&to=${to}`);
   }
 };

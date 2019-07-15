@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, Container } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 
 import gateway from "./utils/gateway";
 import { getUrlParameter, sortByKey } from "./utils";
 
+import ErrorAlert from "./components/ErrorAlert";
 import Header from "./components/Header";
 import Video from "./components/Video";
 import Videos from "./components/Videos";
@@ -21,37 +22,26 @@ export default () => {
       .catch(() => showError(true));
   };
 
+  const videoUrl = getUrlParameter("watchUrl");
+  const watchMode = videoUrl !== "";
+
   useEffect(() => {
-    if (!tasksUpdated.current) {
+    if (!watchMode && !tasksUpdated.current) {
       updateTasks();
     }
   });
-
-  const currentLocation = window.location.href;
-  const videoUrl = getUrlParameter("watchUrl");
-  const watchMode = videoUrl !== "";
 
   return (
     <div className="App">
       <Header />
       <Container>
-        {errorShown && (
-          <Alert variant="danger">
-            <strong>Oh snap!</strong> Something wrong happened. Please{" "}
-            <a
-              onClick={e => {
-                e.preventDefault();
-                window.location.reload();
-              }}
-              href={currentLocation}
-            >
-              refresh
-            </a>{" "}
-            and retry.
-          </Alert>
-        )}
+        <ErrorAlert show={errorShown} />
         {watchMode ? (
-          <Video videoUrl={videoUrl} />
+          <Video
+            getTask={() => gateway.getTask(videoUrl)}
+            poll={gateway.poll}
+            videoUrl={videoUrl}
+          />
         ) : (
           <Videos
             addTask={gateway.createTask}

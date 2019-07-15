@@ -249,6 +249,55 @@ Resources:
               security:
               - sigv4: []
           /tasks/{videoUrl}:
+            get:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                credentials: !GetAtt DbWriteRole.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                    responseTemplates:
+                      application/json: |
+                        #set($inputRoot = $input.path('$'))
+                        #foreach($elem in $inputRoot.Items) {
+                          "videoUrl": "$elem.VideoUrl.S",
+                          "taskStatus": "$elem.TaskStatus.S",
+                          "taskId": "$elem.TaskId.S"
+                        }
+                        #end
+                requestTemplates:
+                  application/json: !Sub |
+                    {
+                      "TableName": "${TasksDynamoTable}",
+                      "KeyConditionExpression": "VideoUrl = :vurl",
+                      "ExpressionAttributeValues": {
+                        ":vurl": {
+                          "S": "$util.urlDecode($input.params('videoUrl'))"
+                        }
+                      }                      
+                    }
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws
+              security:
+              - sigv4: []
             delete:
               consumes:
                 - application/json
