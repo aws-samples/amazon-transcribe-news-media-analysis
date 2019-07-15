@@ -291,7 +291,8 @@ Resources:
                         ":vurl": {
                           "S": "$util.urlDecode($input.params('videoUrl'))"
                         }
-                      }                      
+                      },
+                      "ConsistentRead": true
                     }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
