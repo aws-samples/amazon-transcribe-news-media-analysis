@@ -43,7 +43,11 @@ export default ({ getTask, poll, videoUrl }) => {
       getTask()
         .then(task => {
           setTaskStatus(task.taskStatus);
-          if (task.taskStatus === "ERROR" || task.taskStatus === "WAITING") {
+          if (
+            task.taskStatus === "ERROR" ||
+            task.taskStatus === "WAITING" ||
+            task.taskStatus === "INITIALIZING"
+          ) {
             setTimeout(fetchStatusAndShowVideo, 3000);
           }
 
@@ -122,7 +126,7 @@ export default ({ getTask, poll, videoUrl }) => {
                 process. Please wait...
               </Alert>
             )}
-            {taskStatus === "WAITING" && (
+            {(taskStatus === "WAITING" || taskStatus === "INITIALIZING") && (
               <Alert variant="warning">
                 <Spinner animation="border" />
                 <br />
