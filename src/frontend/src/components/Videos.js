@@ -38,7 +38,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
     <tbody>
       {tasks.map((task, index) => (
         <tr key={index}>
-          <td>
+          <td className="dont-break-out" style={{ maxWidth: "120px" }}>
             <a
               href={task.videoUrl}
               target="_blank"
