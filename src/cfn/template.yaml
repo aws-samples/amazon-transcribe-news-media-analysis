@@ -164,13 +164,15 @@ Resources:
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
+                        #set($c = 0)
                         {
                           "fragments": [
                             #foreach($elem in $inputRoot.Items) {
+                              #set($c = $c + 1)
                               "timestamp": $elem.FragmentTimestamp.N,
                               "transcript": "$elem.Transcript.S",
                               "isPartial": $elem.IsPartial.BOOL
-                            }#if($foreach.hasNext),#end
+                            }#if($foreach.hasNext && $c < 1000),#end
                             #end
                           ]
                         }
