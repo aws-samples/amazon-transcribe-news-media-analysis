@@ -121,8 +121,8 @@ export default ({ getTask, poll, videoUrl }) => {
               <Alert variant="danger">
                 <Spinner animation="border" />
                 <br />
-                Unfortunately, there are some issues with the transcription
-                process. Please wait...
+                Unfortunately, there is an issue with the transcription process.
+                Please wait...
               </Alert>
             )}
             {(taskStatus === "WAITING" || taskStatus === "INITIALIZING") && (
