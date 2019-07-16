@@ -33,7 +33,7 @@ export default ({ getTask, poll, videoUrl }) => {
 
           showVideo(shouldShowVideo(task.taskStatus));
         })
-        .catch(e => console.log(e) || showError(true));
+        .catch(e => showError(true));
 
     fetchStatusAndShowVideo();
   }, [getTask]);

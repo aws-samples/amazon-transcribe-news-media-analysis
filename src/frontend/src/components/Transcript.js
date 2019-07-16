@@ -30,7 +30,7 @@ export default ({ poll, showError, videoUrl }) => {
             setTimeout(() => setWatermark(lastTimestamp + 1), POLL_INTERVAL);
           } else setTimeout(fetchSubtitles, POLL_INTERVAL);
         })
-        .catch(e => console.log(e) || showError(true));
+        .catch(e => showError(true));
 
     fetchSubtitles();
   }, [poll, showError, videoUrl, watermark]);
