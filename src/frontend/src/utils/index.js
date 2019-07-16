@@ -1,3 +1,10 @@
+export const scrollToDiv = el =>
+  (el.scrollTop = el.scrollHeight - el.clientHeight);
+
+export const getCurrentLocation = () => window.location.href;
+
+export const getUTCTimestamp = () => Math.floor(new Date().getTime());
+
 export const getUrlParameter = name => {
   name = name.replace(/[[]/, "\\[").replace(/[\]]/, "\\]");
   const regex = new RegExp(`[\\?&]${name}=([^&#]*)`);
@@ -6,6 +13,11 @@ export const getUrlParameter = name => {
   return results === null
     ? ""
     : decodeURIComponent(results[1].replace(/\+/g, " "));
+};
+
+export const refreshPage = e => {
+  e.preventDefault();
+  window.location.reload();
 };
 
 export const sortByKey = (array, key) =>
