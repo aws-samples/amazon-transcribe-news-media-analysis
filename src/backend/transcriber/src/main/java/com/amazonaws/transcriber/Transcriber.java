@@ -49,7 +49,7 @@ public class Transcriber {
     private TranscribeStreamingRetryClient retryClient;
     private AudioStreamPublisher audioStreamPublisher;
 
-    public Transcriber(Logger logger, String videoUrl, AwsCredentialsProvider credentialsProvider, Region region,
+    public Transcriber(Logger logger, String mediaUrl, AwsCredentialsProvider credentialsProvider, Region region,
             LanguageCode language, 
             MediaEncoding encoding, int sampleRate, String vocabularyName,
             EnumSet<TranscribeResultTypes> stdOutResultTypes) {
@@ -63,7 +63,7 @@ public class Transcriber {
         this.language = language;
         this.vocabularyName = vocabularyName;
 
-        this.handler = new ResponseHandler(videoUrl, credentialsProvider, region, stdOutResultTypes);
+        this.handler = new ResponseHandler(mediaUrl, credentialsProvider, region, stdOutResultTypes);
     }
 
     public void start(InputStream inputStream) throws InterruptedException, ExecutionException {

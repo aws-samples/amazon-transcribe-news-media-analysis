@@ -11,12 +11,12 @@ export const TASKSTATUS_MESSAGE = {
 
 export const TASKSTATUS_TOOLTIPS = {
   ERROR:
-    "The task for processing the video is in a faulty state and waiting for being re-allocated",
+    "The task for processing the media item is in a faulty state and waiting for being re-allocated",
   INITIALIZING:
-    "The task for processing the video has been allocated, and the job will start processing soon",
-  PROCESSING: "The video is being processed",
+    "The task for processing the media item has been allocated, and the job will start processing soon",
+  PROCESSING: "The media item is being processed",
   TERMINATING:
-    "The task for processing the video has been scheduled for termination",
+    "The task for processing the media item has been scheduled for termination",
   WAITING:
-    "The video is waiting for a task to be allocated, in order to start processing"
+    "The media item is waiting for a task to be allocated, in order to start processing"
 };
