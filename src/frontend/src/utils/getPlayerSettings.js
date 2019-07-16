@@ -1,3 +1,7 @@
+const youtubeRegex = new RegExp(
+  "^(https?://)?(www.)?(youtube.com|youtu.?be)/.+$"
+);
+
 export default videoUrl => {
   const settings = {
     autoplay: true,
@@ -5,7 +9,7 @@ export default videoUrl => {
     sources: [{ src: videoUrl }]
   };
 
-  const isYouTube = videoUrl.indexOf("https://www.youtube") === 0;
+  const isYouTube = youtubeRegex.test(videoUrl);
   if (isYouTube) settings.sources[0].type = "video/youtube";
 
   return settings;
