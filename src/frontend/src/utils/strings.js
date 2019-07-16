@@ -3,7 +3,7 @@ export const TASK_DELETE_CONFIRMATION =
 
 export const TASKSTATUS_MESSAGE = {
   ERROR:
-    "Unfortunately, there are some issues with the transcription process. Please wait...",
+    "Unfortunately, there is an issue with the transcription process. Please wait...",
   LOADING: "Loading...",
   WAITING: "The transcription process is going to start soon. Please wait...",
   TERMINATING: "This media is not available anymore."
