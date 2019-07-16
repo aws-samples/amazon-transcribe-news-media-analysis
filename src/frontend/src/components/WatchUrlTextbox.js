@@ -5,12 +5,12 @@ import { RESET_CLIPBOARDCOPY_REF } from "../utils/timers";
 
 import Icon from "./Icon";
 
-export default ({ videoUrl }) => {
+export default ({ mediaUrl }) => {
   const [copied, setCopied] = useState(false);
   const textbox = useRef(null);
 
   const watchUrl = `${window.location.href}?watchUrl=${encodeURIComponent(
-    videoUrl
+    mediaUrl
   )}`;
 
   const copyToClipboard = e => {

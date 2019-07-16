@@ -6,8 +6,8 @@ import { getUrlParameter, sortByKey } from "./utils";
 
 import ErrorAlert from "./components/ErrorAlert";
 import Header from "./components/Header";
-import Video from "./components/Video";
-import Videos from "./components/Videos";
+import MediaItem from "./components/MediaItem";
+import Media from "./components/Media";
 
 export default () => {
   const [tasks, setTasks] = useState([]);
@@ -18,12 +18,12 @@ export default () => {
     tasksUpdated.current = true;
     gateway
       .getTasks()
-      .then(r => setTasks(sortByKey(r.tasks, "videoUrl")))
+      .then(r => setTasks(sortByKey(r.tasks, "mediaUrl")))
       .catch(() => showError(true));
   };
 
-  const videoUrl = getUrlParameter("watchUrl");
-  const watchMode = videoUrl !== "";
+  const mediaUrl = getUrlParameter("watchUrl");
+  const watchMode = mediaUrl !== "";
 
   useEffect(() => {
     if (!watchMode && !tasksUpdated.current) {
@@ -37,13 +37,13 @@ export default () => {
       <Container>
         <ErrorAlert show={errorShown} />
         {watchMode ? (
-          <Video
-            getTask={() => gateway.getTask(videoUrl)}
+          <MediaItem
+            getTask={() => gateway.getTask(mediaUrl)}
             poll={gateway.poll}
-            videoUrl={videoUrl}
+            mediaUrl={mediaUrl}
           />
         ) : (
-          <Videos
+          <Media
             addTask={gateway.createTask}
             deleteTask={gateway.deleteTask}
             onError={() => showError(true)}

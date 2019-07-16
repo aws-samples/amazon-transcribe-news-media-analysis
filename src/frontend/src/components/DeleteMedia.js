@@ -8,7 +8,7 @@ export default ({ onConfirm, onDeleted, onError }) => {
   const [deleting, setDeleting] = useState(false);
 
   const hideModal = () => showConfirmation(false);
-  const deleteVideo = () => {
+  const deleteMediaItem = () => {
     setDeleting(true);
 
     const afterDeletion = () => {
@@ -49,11 +49,11 @@ export default ({ onConfirm, onDeleted, onError }) => {
           <strong>Do you wish to continue?</strong>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={deleteVideo} variant="danger">
+          <Button onClick={deleteMediaItem} variant="danger">
             {deleting ? (
               <Spinner animation="border" size="sm" />
             ) : (
-              "Remove the video"
+              "Remove the media item"
             )}
           </Button>
           <Button onClick={hideModal}>Cancel</Button>

@@ -10,13 +10,13 @@ import { FETCH_TASKSTATUS_RETRY } from "../utils/timers";
 import ErrorAlert from "./ErrorAlert";
 import Transcript from "./Transcript";
 
-export default ({ getTask, poll, videoUrl }) => {
+export default ({ getTask, poll, mediaUrl }) => {
   const videoNode = useRef(null);
   const [errorShown, showError] = useState(false);
   const [taskStatus, setTaskStatus] = useState("LOADING");
   const [videoShown, showVideo] = useState(false);
 
-  const playerSettings = getPlayerSettings(videoUrl);
+  const playerSettings = getPlayerSettings(mediaUrl);
 
   useEffect(() => {
     const notProcessing = s =>
@@ -52,7 +52,7 @@ export default ({ getTask, poll, videoUrl }) => {
       <Container>
         <Row>
           <Col sm={12}>
-            <Alert variant="dark">{videoUrl}</Alert>
+            <Alert variant="dark">{mediaUrl}</Alert>
             <ErrorAlert show={errorShown} />
             {taskStatus === "TERMINATING" && (
               <Alert variant="danger">{TASKSTATUS_MESSAGE.TERMINATING}</Alert>
@@ -82,7 +82,7 @@ export default ({ getTask, poll, videoUrl }) => {
               <Transcript
                 poll={poll}
                 showError={showError}
-                videoUrl={videoUrl}
+                mediaUrl={mediaUrl}
               />
             )}
             {taskStatus === "ERROR" && (

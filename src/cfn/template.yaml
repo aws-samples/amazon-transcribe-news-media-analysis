@@ -181,11 +181,11 @@ Resources:
                     {
                       "TableName": "${TranscriptDynamoTable}",
                       "IndexName": "MediaAnalysisLSI",
-                      "KeyConditionExpression": "VideoUrl = :vurl AND FragmentTimestamp BETWEEN :from AND :to",
+                      "KeyConditionExpression": "MediaUrl = :murl AND FragmentTimestamp BETWEEN :from AND :to",
                       "ProjectionExpression": "FragmentTimestamp,Transcript,IsPartial",
                       "ExpressionAttributeValues": {
-                        ":vurl": {
-                          "S": "$util.urlDecode($input.params().querystring.get('videoUrl'))"
+                        ":murl": {
+                          "S": "$util.urlDecode($input.params().querystring.get('mediaUrl'))"
                         },
                         ":from": {
                           "N": "$input.params().querystring.get('from')"
@@ -231,7 +231,7 @@ Resources:
                         {
                           "tasks": [
                             #foreach($elem in $inputRoot.Items) {
-                              "videoUrl": "$elem.VideoUrl.S",
+                              "mediaUrl": "$elem.MediaUrl.S",
                               "taskStatus": "$elem.TaskStatus.S",
                               "taskId": "$elem.TaskId.S"
                             }#if($foreach.hasNext),#end
@@ -242,7 +242,7 @@ Resources:
                   application/json: !Sub |
                     {
                       "TableName": "${TasksDynamoTable}",
-                      "ProjectionExpression": "VideoUrl, TaskStatus, TaskId",
+                      "ProjectionExpression": "MediaUrl, TaskStatus, TaskId",
                       "ConsistentRead": true
                     }
                 passthroughBehavior: when_no_match
@@ -250,7 +250,7 @@ Resources:
                 type: aws
               security:
               - sigv4: []
-          /tasks/{videoUrl}:
+          /tasks/{mediaUrl}:
             get:
               consumes:
                 - application/json
@@ -279,7 +279,7 @@ Resources:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
                         #foreach($elem in $inputRoot.Items) {
-                          "videoUrl": "$elem.VideoUrl.S",
+                          "mediaUrl": "$elem.MediaUrl.S",
                           "taskStatus": "$elem.TaskStatus.S",
                           "taskId": "$elem.TaskId.S"
                         }
@@ -288,10 +288,10 @@ Resources:
                   application/json: !Sub |
                     {
                       "TableName": "${TasksDynamoTable}",
-                      "KeyConditionExpression": "VideoUrl = :vurl",
+                      "KeyConditionExpression": "MediaUrl = :murl",
                       "ExpressionAttributeValues": {
-                        ":vurl": {
-                          "S": "$util.urlDecode($input.params('videoUrl'))"
+                        ":murl": {
+                          "S": "$util.urlDecode($input.params('mediaUrl'))"
                         }
                       },
                       "ConsistentRead": true
@@ -335,8 +335,8 @@ Resources:
                     {
                       "TableName": "${TasksDynamoTable}",
                       "Key": {
-                        "VideoUrl": {
-                          "S": "$util.urlDecode($input.params('videoUrl'))"
+                        "MediaUrl": {
+                          "S": "$util.urlDecode($input.params('mediaUrl'))"
                         }
                       },
                       "UpdateExpression": "set TaskStatus = :newStatus",
@@ -385,8 +385,8 @@ Resources:
                     {
                       "TableName": "${TasksDynamoTable}",
                       "Item": {
-                        "VideoUrl": {
-                          "S": "$util.urlDecode($input.params('videoUrl'))"
+                        "MediaUrl": {
+                          "S": "$util.urlDecode($input.params('mediaUrl'))"
                         },
                         "TaskStatus": {
                           "S": "WAITING"
@@ -411,11 +411,11 @@ Resources:
       TableName: MediaAnalysisTasks
       AttributeDefinitions: 
         - 
-          AttributeName: VideoUrl
+          AttributeName: MediaUrl
           AttributeType: S
       KeySchema: 
         - 
-          AttributeName: VideoUrl
+          AttributeName: MediaUrl
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
@@ -425,7 +425,7 @@ Resources:
       TableName: MediaAnalysisTranscript
       AttributeDefinitions: 
         - 
-          AttributeName: VideoUrl
+          AttributeName: MediaUrl
           AttributeType: S
         - 
           AttributeName: ResultId
@@ -435,7 +435,7 @@ Resources:
           AttributeType: N
       KeySchema: 
         - 
-          AttributeName: VideoUrl
+          AttributeName: MediaUrl
           KeyType: HASH
         - 
           AttributeName: ResultId
@@ -446,7 +446,7 @@ Resources:
           IndexName: MediaAnalysisLSI
           KeySchema: 
             - 
-              AttributeName: VideoUrl
+              AttributeName: MediaUrl
               KeyType: HASH
             - 
               AttributeName: FragmentTimestamp

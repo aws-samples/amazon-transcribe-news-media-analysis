@@ -40,7 +40,7 @@ public class ResponseHandler implements StreamTranscriptionBehavior {
 
     private long debounceTime;
 
-    private final String videoUrl;
+    private final String mediaUrl;
 
     private String requestId;
     private String sessionId;
@@ -52,13 +52,13 @@ public class ResponseHandler implements StreamTranscriptionBehavior {
 
     private Instant responseTime;
 
-    public ResponseHandler(String videoUrl, AwsCredentialsProvider credentialsProvider, Region region,
+    public ResponseHandler(String mediaUrl, AwsCredentialsProvider credentialsProvider, Region region,
                            EnumSet<TranscribeResultTypes> stdOutResultTypes) {
-        this.videoUrl = videoUrl;
+        this.mediaUrl = mediaUrl;
         this.stdOutResultTypes = stdOutResultTypes;
         this.debounceTime = System.currentTimeMillis();
         this.ddbClient = DynamoDbClient.builder().credentialsProvider(credentialsProvider).region(region).build();
-        this.writer = new TranscribedSegmentWriter(ddbClient, ddbTableName, videoUrl);
+        this.writer = new TranscribedSegmentWriter(ddbClient, ddbTableName, mediaUrl);
     }
 
     @Override
