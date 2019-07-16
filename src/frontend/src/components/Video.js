@@ -1,85 +1,51 @@
-import React, { useEffect, useReducer, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import videojs from "video.js";
 import "videojs-youtube";
 
+import getPlayerSettings from "../utils/getPlayerSettings";
+import { TASKSTATUS_MESSAGE } from "../utils/strings";
+import { FETCH_TASKSTATUS_RETRY } from "../utils/timers";
+
 import ErrorAlert from "./ErrorAlert";
 import Transcript from "./Transcript";
 
-import { getUTCTimestamp, sortByKey } from "../utils";
-const POLL_INTERVAL = 1000;
-
 export default ({ getTask, poll, videoUrl }) => {
   const videoNode = useRef(null);
-  const [taskStatus, setTaskStatus] = useState("LOADING");
   const [errorShown, showError] = useState(false);
+  const [taskStatus, setTaskStatus] = useState("LOADING");
   const [videoShown, showVideo] = useState(false);
-  const [watermark, setWatermark] = useState(0);
-  const [transcript, addTranscriptions] = useReducer(
-    (transcriptions, newTranscriptions) => {
-      const withoutPartials = transcriptions.filter(el => !el.isPartial);
-      return [...withoutPartials, ...newTranscriptions];
-    },
-    []
-  );
+
+  const playerSettings = getPlayerSettings(videoUrl);
 
   useEffect(() => {
-    const fetchSubtitles = () =>
-      poll(videoUrl, watermark, getUTCTimestamp())
-        .then(r => {
-          const serialized = sortByKey(r.fragments, "timestamp");
-          const fullFragments = serialized.filter(el => !el.isPartial);
-          addTranscriptions(serialized);
-
-          if (fullFragments.length > 0) {
-            const lastTimestamp =
-              fullFragments[fullFragments.length - 1].timestamp;
-            setTimeout(() => setWatermark(lastTimestamp + 1), POLL_INTERVAL);
-          } else setTimeout(fetchSubtitles, POLL_INTERVAL);
-        })
-        .catch(() => showError(true));
+    const notProcessing = s =>
+      s === "ERROR" || s === "WAITING" || s === "INITIALIZING";
+    const shouldShowVideo = s => s !== "TERMINATING";
 
     const fetchStatusAndShowVideo = () =>
       getTask()
         .then(task => {
           setTaskStatus(task.taskStatus);
-          if (
-            task.taskStatus === "ERROR" ||
-            task.taskStatus === "WAITING" ||
-            task.taskStatus === "INITIALIZING"
-          ) {
-            setTimeout(fetchStatusAndShowVideo, 3000);
+          if (notProcessing(task.taskStatus)) {
+            setTimeout(fetchStatusAndShowVideo, FETCH_TASKSTATUS_RETRY);
           }
 
-          if (task.taskStatus !== "TERMINATING") {
-            showVideo(true);
-          }
-
-          if (task.taskStatus === "PROCESSING") {
-            fetchSubtitles();
-          }
+          showVideo(shouldShowVideo(task.taskStatus));
         })
-        .catch(() => showError(true));
+        .catch(e => console.log(e) || showError(true));
 
     fetchStatusAndShowVideo();
-  }, [getTask, poll, watermark, videoUrl]);
+  }, [getTask]);
 
   useEffect(() => {
     if (videoShown) {
-      const options = {
-        autoplay: true,
-        controls: true,
-        sources: [{ src: videoUrl }]
-      };
-
-      const isYouTube = videoUrl.indexOf("https://www.youtube") === 0;
-      if (isYouTube) options.sources[0].type = "video/youtube";
       let player;
-
-      setTimeout(() => (player = videojs(videoNode.current, options)), 1000);
+      const element = videoNode.current;
+      setTimeout(() => (player = videojs(element, playerSettings)), 1000);
       return () => (player ? player.dispose() : {});
     }
-  }, [videoShown, videoUrl]);
+  }, [playerSettings, videoShown]);
 
   return (
     <div data-vjs-player>
@@ -89,9 +55,7 @@ export default ({ getTask, poll, videoUrl }) => {
             <Alert variant="dark">{videoUrl}</Alert>
             <ErrorAlert show={errorShown} />
             {taskStatus === "TERMINATING" && (
-              <Alert variant="danger">
-                This media is not available anymore.
-              </Alert>
+              <Alert variant="danger">{TASKSTATUS_MESSAGE.TERMINATING}</Alert>
             )}
           </Col>
         </Row>
@@ -111,25 +75,28 @@ export default ({ getTask, poll, videoUrl }) => {
               <>
                 <Spinner animation="border" />
                 <br />
-                <span>Loading...</span>
+                <span>{TASKSTATUS_MESSAGE.LOADING}</span>
               </>
             )}
             {taskStatus === "PROCESSING" && (
-              <Transcript transcript={transcript} />
+              <Transcript
+                poll={poll}
+                showError={showError}
+                videoUrl={videoUrl}
+              />
             )}
             {taskStatus === "ERROR" && (
               <Alert variant="danger">
                 <Spinner animation="border" />
                 <br />
-                Unfortunately, there are some issues with the transcription
-                process. Please wait...
+                {TASKSTATUS_MESSAGE.ERROR}
               </Alert>
             )}
             {(taskStatus === "WAITING" || taskStatus === "INITIALIZING") && (
               <Alert variant="warning">
                 <Spinner animation="border" />
                 <br />
-                The transcription process is going to start soon. Please wait...
+                {TASKSTATUS_MESSAGE.WAITING}
               </Alert>
             )}
           </Col>

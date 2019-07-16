@@ -29,7 +29,7 @@ export default () => {
     if (!watchMode && !tasksUpdated.current) {
       updateTasks();
     }
-  });
+  }, [tasksUpdated, watchMode]);
 
   return (
     <div className="App">

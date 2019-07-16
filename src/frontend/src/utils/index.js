@@ -1,5 +1,4 @@
-export const scrollToDiv = el =>
-  (el.scrollTop = el.scrollHeight - el.clientHeight);
+export const formatDate = ts => new Date(ts).toString();
 
 export const getCurrentLocation = () => window.location.href;
 
@@ -20,10 +19,13 @@ export const refreshPage = e => {
   window.location.reload();
 };
 
+export const scrollToDiv = el =>
+  el ? (el.scrollTop = el.scrollHeight - el.clientHeight) : {};
+
 export const sortByKey = (array, key) =>
   array
     .concat()
     .sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0));
 
 export const toObj = (arr, key) =>
-  arr.reduce((obj, el) => ((obj[el[key].trim()] = el), obj), {});
+  arr.reduce((obj, el) => (obj[el[key].trim()] = el) && obj, {});

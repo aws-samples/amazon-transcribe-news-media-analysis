@@ -1,6 +1,8 @@
 import React, { useRef, useState } from "react";
 import { Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 
+import { RESET_CLIPBOARDCOPY_REF } from "../utils/timers";
+
 import Icon from "./Icon";
 
 export default ({ videoUrl }) => {
@@ -16,7 +18,7 @@ export default ({ videoUrl }) => {
     textbox.current.select();
     document.execCommand("copy");
     setCopied(true);
-    setTimeout(() => setCopied(false), 500);
+    setTimeout(() => setCopied(false), RESET_CLIPBOARDCOPY_REF);
   };
 
   const openInNewWindow = e => {
