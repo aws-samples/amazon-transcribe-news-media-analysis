@@ -16,11 +16,9 @@
  */
 package com.amazonaws.transcriber;
 
-import com.google.common.base.Strings;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -33,128 +31,49 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-@Command(name = "mediainfer", 
-    description = "Inference of media streams with Amazon machine learning services.", 
-    version = "1.0.0",
-    mixinStandardHelpOptions = true, 
-    sortOptions = false,
-    defaultValueProvider = CommandLineArgumentDefaultProvider.class)
+public class App {
 
-public class App implements Runnable {
+    private static final Logger logger = LogManager.getLogger(App.class);
+
+    private static TranscriberConfig config = TranscriberConfig.getInstance();
+
     public static void main(String... args) {
-        CommandLine.run(new App(), args);
-    }
-    
-    @Parameters(index = "0", 
-        description = "The name of this channel.")
-    private String channelName;
-
-    @Parameters(index = "1",
-        description = "Input media. See ffmpeg's -i argument.")
-    private String input;
-
-    @Option(names = {"--aws-region"}, 
-        description = "AWS region. Default: AWS SDK default.", 
-        converter = AWSRegionConverter.class)
-    private Region awsRegion;
-
-    @Option(names = {"--ffmpeg-path"}, 
-        description = "Path of FFMPEG exectuable. Default: ${DEFAULT-VALUE}.")
-    private String ffmpegPath = "./ffmpeg";
-
-    @Option(names = {"--ffmpeg-log-level"}, 
-        description = "Level of ffmpeg log output. Log outputs of this level and above are logged to stderr. Default: ${DEFAULT-VALUE}.", 
-        converter = FfmpegLogLevelConverter.class)
-    private Ffmpeg.LogLevel ffmpegLogLevel = Ffmpeg.LogLevel.WARNING;
-
-    @Option(names = {"--ffplay-path"}, 
-        description = "Path of ffplay exectuable. Default: ${DEFAULT-VALUE}.")
-    private String ffplayPath = "./ffplay";
-
-    @Option(names = {"--youtubedl-path"}, 
-        description = "Path of youtube-dl exectuable. Default: ${DEFAULT-VALUE}.")
-    private String youtubeDlPath = "./youtube-dl";
-
-    
-    @Option(names = {"--input-format"}, 
-        description = "Input media's format. See ffmpeg's -f argument.")
-    private String inputFormat;
-
-    @Option(names = {"--input-language"}, 
-        description = "Input language. Default: ${DEFAULT-VALUE}.")
-    private LanguageCode inputLanguage = LanguageCode.EN_US; //would be nice if we can default to the language in the media stream...
-    
-    
-    @Option(names = "--output", 
-        description = "Output to send monitor stream to. Default: ${DEFAULT-VALUE}.")
-    private String output;
-
-
-    @Option(names = {"--transcribe-media-encoding"}, 
-        description = "Amazon Transribe media encoding. One of: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}.")
-    private MediaEncoding transcribeMediaEncoding = MediaEncoding.PCM;
-
-    @Option(names = {"--transcribe-media-sample-rate"}, 
-        description = "Amazon Transribe media sample rate, in Hz. Default: ${DEFAULT-VALUE}.")
-    private int transcribeMediaSampleRate = 16_000;
-
-    @Option(names = {"--transcribe-vocabulary-name"}, 
-        description = "Amazon Transribe custom vocabulary. Default: ${DEFAULT-VALUE}.")
-    private String transcribeVocabularyName;
-
-    @Option(names = "--transcribe-kinesis-stream-name", 
-        description = "Name of Amazon Kinesis data stream to send Amazon Transribe outputs to. Default: ${DEFAULT-VALUE}.")
-    private String transcribeKinesisStreamName;
-    
-    @Option(names = "--transcribe-stdout-result-types",
-        description = "Types of Amazon Transcribe results to send to stdout. One or more of: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}",
-        split = ",")
-    // https://github.com/remkop/picocli/issues/628. Exception if I set the default value. Workaround is to use a default provider.
-    private EnumSet<TranscribeResultTypes> transcribeStdOutResultTypes = EnumSet.noneOf(TranscribeResultTypes.class); 
-    
-    private final Logger logger = new Logger();
-    private final Logger.Log log = logger.getLog("main");
-    private Player player;
-    private Encoder encoder;
-    private Transcriber transcriber;
-    
-    public void run() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> { 
-            log.info("Shutting down");
-            stop();
-        })); 
-        log.info("Channel Name is %s", channelName);
-        log.info("Input is %s", input);
+        String input = config.mediaUrl();
+        logger.info("Input is {}", input);
         if (input.startsWith("https://www.youtube.com/")) {
-            input = getYouTubeUrl(input);
-            log.info("YouTube input is %s", input);
+            input = getYouTubeUrl(config.youtubeDlPath(), input);
+            logger.info("YouTube input is %s", input);
         }
-        if (Strings.isNullOrEmpty(input)) {
-            throw new IllegalArgumentException("input cannot be null or empty");
-        }
-        if (!Strings.isNullOrEmpty(output)) {
-            player = new Player(logger, ffplayPath, channelName, output);
-            player.start();
-        }
+
         AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create();
-        transcriber = new Transcriber(logger, input, credentialsProvider, awsRegion, inputLanguage,
-                transcribeMediaEncoding, transcribeMediaSampleRate, transcribeVocabularyName,
-                transcribeStdOutResultTypes);
-        encoder = new Encoder(logger, ffmpegPath, ffmpegLogLevel, inputFormat, input, output);
+        Transcriber transcriber = new Transcriber(input, credentialsProvider, Region.of("eu-west-1"), LanguageCode.EN_US,
+            MediaEncoding.PCM, config.mediaSampleRate(), "");
+        Encoder encoder = new Encoder(config.ffmpegPath(), Ffmpeg.LogLevel.WARNING, "", input);
+
         InputStream mediaStream = encoder.start();
         try {
             transcriber.start(mediaStream);
         } catch (InterruptedException | ExecutionException ex) {
-            log.error("Starting transcriber...", ex);
+            logger.error("Starting transcriber...", ex);
+        }
+
+        // the transcriber runs in a separate thread so that's why we need an infinite loop, there's probably a better
+        // way to do this but it'll do for now
+        while(true) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                logger.info("Application closing");
+            }
         }
     }
-    
-    private String getYouTubeUrl(String input) {
-        List<String> command = new ArrayList(Arrays.asList(youtubeDlPath, "--hls-use-mpegts", "--hls-prefer-ffmpeg", "--get-url", input));
+
+    //TODO: use Optional or throw with a meaningful exception as currently this method can cause a NullPointerException
+    private static String getYouTubeUrl(String youtubeDlPath, String input) {
+        List<String> command = new ArrayList<>(Arrays.asList(youtubeDlPath, "--hls-use-mpegts", "--hls-prefer-ffmpeg", "--get-url", input));
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         try {
             Process process = processBuilder.start();
@@ -166,28 +85,11 @@ public class App implements Runnable {
                         return reader.readLine();
                     } catch (IOException e) { }
                 } else {
-                    log.warn("youtube-dl exit code is %d", exitCode);
+                    logger.warn("youtube-dl exit code is %d", exitCode);
                 }
             } catch (InterruptedException e) { }
         } catch (IOException e) { }
         return null;
     }
-    
-    private void stop() {
-        if (encoder != null) {
-            encoder.stop();
-        }
-        if (player != null) {
-            player.stop();
-        }
-        if (transcriber != null) {
-            transcriber.stop();
-        }
-    }
-    
-    @Override
-    public void finalize() throws Throwable {
-        stop();
-        super.finalize();
-    }         
+
 }

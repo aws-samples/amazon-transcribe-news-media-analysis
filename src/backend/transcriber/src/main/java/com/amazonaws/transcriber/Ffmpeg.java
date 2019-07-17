@@ -16,12 +16,18 @@
  */
 package com.amazonaws.transcriber;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 public abstract class Ffmpeg {
+
+    private static final Logger logger = LogManager.getLogger(Ffmpeg.class);
+
     public enum LogLevel {
         QUIET(-8),
         PANIC(0), 
@@ -35,7 +41,7 @@ public abstract class Ffmpeg {
 
         private final int value;
         
-        private LogLevel(int value) {
+        LogLevel(int value) {
             this.value = value;
         }
 
@@ -55,7 +61,6 @@ public abstract class Ffmpeg {
         }
     }
     
-    private final Logger.Log log;
     private final String path;
     private final Pattern printFilter;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -64,8 +69,7 @@ public abstract class Ffmpeg {
     private Thread stderrReaderThread;
 
     
-    Ffmpeg(String name, Logger logger, String path, Pattern printFilter) {
-        this.log = logger.getLog(name);
+    Ffmpeg(String name, String path, Pattern printFilter) {
         this.path = path;
         this.printFilter = printFilter;
     }
@@ -76,23 +80,23 @@ public abstract class Ffmpeg {
         }
         args.add(0, path);
         
-        log.info("Starting with %s", args);
+        logger.info("Starting with %s", args);
         ProcessBuilder processBuilder = new ProcessBuilder(args);
 
         try {
             process = processBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             stderrReaderThread = new Thread(() -> {
-                Thread.currentThread().setName(log.getName());
+                Thread.currentThread().setName(logger.getName());
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
                         String line = reader.readLine();
                         if (line != null) {
                             if ((printFilter == null) || printFilter.matcher(line).matches()) {
-                                log.info(line);
+                                logger.info(line);
                             }
                         } else {
-                            log.info("Completed");
+                            logger.info("Completed");
                             break;
                         }
                     } catch (IOException e) {
@@ -103,7 +107,7 @@ public abstract class Ffmpeg {
             stdinWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
             return process.getInputStream();
         } catch (IOException e) {
-            log.error("Error starting", e);
+            logger.error("Error starting", e);
             return null;
         }
     }
