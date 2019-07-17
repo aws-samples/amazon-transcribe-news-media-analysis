@@ -58,16 +58,6 @@ public class App {
         } catch (InterruptedException | ExecutionException ex) {
             logger.error("Starting transcriber...", ex);
         }
-
-        // the transcriber runs in a separate thread so that's why we need an infinite loop, there's probably a better
-        // way to do this but it'll do for now
-        while(true) {
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                logger.info("Application closing");
-            }
-        }
     }
 
     //TODO: use Optional or throw with a meaningful exception as currently this method can cause a NullPointerException
