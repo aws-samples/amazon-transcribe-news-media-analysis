@@ -1,11 +1,11 @@
 import React from "react";
 import { Button, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
 
-import { TASKSTATUS_TOOLTIPS } from "../utils/strings";
+import { BUTTONS, GENERIC, TASKSTATUS_TOOLTIPS } from "../utils/strings";
 import { toObj } from "../utils";
 
-import AddVideo from "./AddVideo";
-import DeleteVideo from "./DeleteVideo";
+import AddMediaContent from "./AddMediaContent";
+import DeleteMediaContent from "./DeleteMediaContent";
 import WatchUrlTextbox from "./WatchUrlTextbox";
 
 const { maxTasks } = window.mediaAnalysisSettings;
@@ -14,12 +14,12 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
   <Table variant="dark">
     <thead>
       <tr>
-        <th>Video URL</th>
-        <th>Status</th>
-        <th>Watch URL</th>
+        <th>{GENERIC.MEDIA_URL}</th>
+        <th>{GENERIC.STATUS}</th>
+        <th>{GENERIC.WATCH_URL}</th>
         <th>
           <Button onClick={updateTasks} size="sm" variant="warning">
-            Refresh
+            {BUTTONS.REFRESH}
           </Button>
         </th>
       </tr>
@@ -29,12 +29,12 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
         <tr key={index}>
           <td className="dont-break-out" style={{ maxWidth: "120px" }}>
             <a
-              href={task.videoUrl}
+              href={task.mediaUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "white", textDecoration: "underline" }}
             >
-              {task.videoUrl}
+              {task.mediaUrl}
             </a>
           </td>
           <td>
@@ -51,12 +51,12 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
             </OverlayTrigger>
           </td>
           <td>
-            <WatchUrlTextbox videoUrl={task.videoUrl} />
+            <WatchUrlTextbox mediaUrl={task.mediaUrl} />
           </td>
           <td>
             {task.taskStatus === "PROCESSING" && (
-              <DeleteVideo
-                onConfirm={() => deleteTask(task.videoUrl)}
+              <DeleteMediaContent
+                onConfirm={() => deleteTask(task.mediaUrl)}
                 onDeleted={updateTasks}
                 onError={onError}
               />
@@ -70,11 +70,11 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
           <td />
           <td />
           <td>
-            <AddVideo
+            <AddMediaContent
               onAdded={updateTasks}
               onError={onError}
               onSubmit={addTask}
-              tasks={toObj(tasks, "videoUrl")}
+              tasks={toObj(tasks, "mediaUrl")}
             />
           </td>
         </tr>

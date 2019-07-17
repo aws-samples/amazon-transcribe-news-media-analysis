@@ -4,7 +4,7 @@ import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import { formatDate, getUTCTimestamp, scrollToDiv, sortByKey } from "../utils";
 import { POLL_INTERVAL } from "../utils/timers";
 
-export default ({ poll, showError, videoUrl }) => {
+export default ({ poll, showError, mediaUrl }) => {
   const textDiv = useRef(undefined);
   const [watermark, setWatermark] = useState(getUTCTimestamp());
   const [transcript, addTranscriptions] = useReducer(
@@ -17,7 +17,7 @@ export default ({ poll, showError, videoUrl }) => {
 
   useEffect(() => {
     const fetchSubtitles = () =>
-      poll(videoUrl, watermark, getUTCTimestamp())
+      poll(mediaUrl, watermark, getUTCTimestamp())
         .then(r => {
           const serialized = sortByKey(r.fragments, "timestamp");
           const fullFragments = serialized.filter(el => !el.isPartial);
@@ -33,7 +33,7 @@ export default ({ poll, showError, videoUrl }) => {
         .catch(e => showError(true));
 
     fetchSubtitles();
-  }, [poll, showError, videoUrl, watermark]);
+  }, [poll, showError, mediaUrl, watermark]);
 
   useEffect(() => {
     scrollToDiv(textDiv.current);
