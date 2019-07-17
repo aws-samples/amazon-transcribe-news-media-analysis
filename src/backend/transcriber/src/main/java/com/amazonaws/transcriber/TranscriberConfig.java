@@ -16,9 +16,9 @@ public class TranscriberConfig {
     private String ffmpegPath = parseEnvVar("FFMPEG_EXE", "/ffmpeg/ffmpeg");
     private String youtubeDlPath = parseEnvVar("YOUTUBE_DL_EXE", "/usr/local/bin/youtube-dl");
     private int mediaSampleRate = parseEnvVar("MEDIA_SAMPLE_RATE", 16000);
-    private String transcriptsDynamoDbTable = Optional.ofNullable(System.getenv("TRANSCRIPTS_DYNAMO_DB_TABLE")).orElseThrow(IllegalStateException::new);
-    private String tasksDynamoDbTable = Optional.ofNullable(System.getenv("TASKS_DYNAMO_DB_TABLE")).orElseThrow(IllegalStateException::new);
-    private String mediaUrl = Optional.ofNullable(System.getenv("MEDIA_URL")).orElseThrow(IllegalStateException::new);
+    private String transcriptsDynamoDbTable = requiredEnvVar("TRANSCRIPTS_DYNAMO_DB_TABLE");
+    private String tasksDynamoDbTable = requiredEnvVar("TASKS_DYNAMO_DB_TABLE");
+    private String mediaUrl = requiredEnvVar("MEDIA_URL");
     private String vocabularyName = System.getenv("VOCABULARY_NAME");
 
     static TranscriberConfig getInstance() {
@@ -39,6 +39,10 @@ public class TranscriberConfig {
 
     private String parseEnvVar(String name, String defVal) {
         return parseEnvVar(Function.identity(), name, defVal);
+    }
+
+    private String requiredEnvVar(String name) {
+        return Optional.ofNullable(System.getenv(name)).orElseThrow(IllegalStateException::new);
     }
 
     int debounceDuration() {
