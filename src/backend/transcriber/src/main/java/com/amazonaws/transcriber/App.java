@@ -48,9 +48,8 @@ public class App {
             logger.info("YouTube input is %s", input);
         }
 
-        AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create();
-        Transcriber transcriber = new Transcriber(input, credentialsProvider, Region.of("eu-west-1"), LanguageCode.EN_US,
-            MediaEncoding.PCM, config.mediaSampleRate(), "");
+        Transcriber transcriber = new Transcriber(input, LanguageCode.EN_US, MediaEncoding.PCM,
+            config.mediaSampleRate(), "");
         Encoder encoder = new Encoder(config.ffmpegPath(), Ffmpeg.LogLevel.WARNING, "", input);
 
         InputStream mediaStream = encoder.start();

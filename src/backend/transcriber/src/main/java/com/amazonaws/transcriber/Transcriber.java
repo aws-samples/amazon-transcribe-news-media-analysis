@@ -39,9 +39,6 @@ import java.util.concurrent.ExecutionException;
 public class Transcriber {
     private static final Logger logger = LogManager.getLogger(Transcriber.class);
     
-    private final Region region;
-    private final AwsCredentialsProvider credentials;
-    
     private final MediaEncoding encoding;
     private final int sampleRate; 
     private final LanguageCode language;
@@ -51,29 +48,22 @@ public class Transcriber {
     private TranscribeStreamingRetryClient retryClient;
     private AudioStreamPublisher audioStreamPublisher;
 
-    public Transcriber(String mediaUrl, AwsCredentialsProvider credentialsProvider, Region region,
-            LanguageCode language, 
-            MediaEncoding encoding, int sampleRate, String vocabularyName) {
-
-        this.region = region;
-        this.credentials = credentialsProvider;
+    public Transcriber(String mediaUrl, LanguageCode language, MediaEncoding encoding,
+                       int sampleRate, String vocabularyName) {
 
         this.encoding = encoding;
         this.sampleRate = sampleRate;
         this.language = language;
         this.vocabularyName = vocabularyName;
 
-        this.handler = new ResponseHandler(mediaUrl, credentialsProvider, region);
+        this.handler = new ResponseHandler(mediaUrl);
     }
 
     public void start(InputStream inputStream) throws InterruptedException, ExecutionException {
         if (audioStreamPublisher != null) {
             throw new IllegalStateException("Already running");
         }
-        TranscribeStreamingAsyncClient asyncClient = TranscribeStreamingAsyncClient.builder()
-            .credentialsProvider(credentials)
-            .region(region)
-            .build();
+        TranscribeStreamingAsyncClient asyncClient = TranscribeStreamingAsyncClient.create();
         retryClient = new TranscribeStreamingRetryClient(asyncClient);
         StartStreamTranscriptionRequest.Builder requestBuilder = StartStreamTranscriptionRequest.builder()
             .languageCode(language.toString())

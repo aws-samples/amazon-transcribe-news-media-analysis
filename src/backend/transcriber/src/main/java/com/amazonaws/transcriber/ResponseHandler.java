@@ -49,9 +49,9 @@ public class ResponseHandler implements StreamTranscriptionBehavior {
 
     private Instant responseTime;
 
-    public ResponseHandler(String mediaUrl, AwsCredentialsProvider credentialsProvider, Region region) {
+    public ResponseHandler(String mediaUrl) {
         this.debounceTime = System.currentTimeMillis();
-        this.writer = new TranscribedSegmentWriter(DynamoDbClient.builder().build(), config.transcriptsDynamoDbTable(), mediaUrl);
+        this.writer = new TranscribedSegmentWriter(DynamoDbClient.create(), config.transcriptsDynamoDbTable(), mediaUrl);
     }
 
     @Override
