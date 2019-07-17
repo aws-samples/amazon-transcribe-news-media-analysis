@@ -14,6 +14,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
   <Table variant="dark">
     <thead>
       <tr>
+        <th>{GENERIC.TITLE}</th>
         <th>{GENERIC.MEDIA_URL}</th>
         <th>{GENERIC.STATUS}</th>
         <th>{GENERIC.WATCH_URL}</th>
@@ -27,6 +28,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
     <tbody>
       {tasks.map((task, index) => (
         <tr key={index}>
+          <td>{task.mediaTitle}</td>
           <td className="dont-break-out" style={{ maxWidth: "120px" }}>
             <a
               href={task.mediaUrl}
@@ -66,6 +68,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
       ))}
       {tasks.length < maxTasks && (
         <tr key={tasks.length}>
+          <td />
           <td />
           <td />
           <td />

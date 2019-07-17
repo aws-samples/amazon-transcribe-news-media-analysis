@@ -11,11 +11,13 @@ export const GENERIC = {
   CONTINUE_CONFIRMATION: "Do you wish to continue?",
   COPIED: "Copied!",
   COPY_TO_CLIPBOAD: "Copy to Clipboard",
+  DESCRIPTION: "Description",
   FORK_GITHUB: "Fork me on Github",
   MEDIA_URL: "Media URL",
   OPEN_NEW_WINDOW: "Open in a new window",
   SOLUTION_TITLE: "Amazon Transcribe News Media Analysis",
   STATUS: "Status",
+  TITLE: "Title",
   WATCH_URL: "Watch URL"
 };
 

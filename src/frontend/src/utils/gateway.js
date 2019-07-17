@@ -3,8 +3,11 @@ import request from "./request";
 const encoded = mediaUrl => encodeURIComponent(mediaUrl.trim());
 
 export default {
-  createTask(mediaUrl) {
-    return request(`/tasks/${encoded(mediaUrl)}`, "put");
+  createTask({ mediaDescription, mediaTitle, mediaUrl }) {
+    return request(`/tasks/${encoded(mediaUrl)}`, "put", {
+      mediaDescription,
+      mediaTitle
+    });
   },
 
   deleteTask(mediaUrl) {
