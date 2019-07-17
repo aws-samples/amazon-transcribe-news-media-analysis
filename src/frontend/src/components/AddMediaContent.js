@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { Button, Form, Modal, Spinner } from "react-bootstrap";
 
+import { BUTTONS, MEDIA_CONTENT } from "../utils/strings";
+
 export default ({ onSubmit, onAdded, onError, tasks }) => {
   const [addModalShown, showAddModal] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [videoUrl, setVideoUrl] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
 
   const hideModal = () => showAddModal(false);
-  const addVideo = () => {
+  const addMediaItem = () => {
     setAdding(true);
 
     const afterAdding = () => {
@@ -21,13 +23,13 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
       onError();
     };
 
-    return onSubmit(videoUrl)
+    return onSubmit(mediaUrl)
       .then(afterAdding)
       .catch(withError);
   };
 
-  const videoAlreadyPresent = !!tasks[videoUrl.trim()];
-  const isValid = videoUrl.indexOf("http") === 0 && !videoAlreadyPresent;
+  const mediaAlreadyPresent = !!tasks[mediaUrl.trim()];
+  const isValid = mediaUrl.indexOf("http") === 0 && !mediaAlreadyPresent;
 
   const textboxValidationAttributes = isValid
     ? { isValid: true }
@@ -36,7 +38,7 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
   return (
     <>
       <Button size="sm" variant="success" onClick={() => showAddModal(true)}>
-        Add New...
+        {BUTTONS.ADD}
       </Button>
       <Modal
         size="lg"
@@ -46,33 +48,33 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
         style={{ color: "black" }}
       >
         <Modal.Header closeButton>
-          <Modal.Title>New Video</Modal.Title>
+          <Modal.Title>{MEDIA_CONTENT.NEW_TITLE}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group controlId="videoUrl">
-              <Form.Label>Video Url</Form.Label>
+            <Form.Group controlId="mediaUrl">
+              <Form.Label>{MEDIA_CONTENT.URL}</Form.Label>
               <Form.Control
-                onChange={e => setVideoUrl(e.target.value)}
+                onChange={e => setMediaUrl(e.target.value)}
                 required
                 type="text"
                 {...textboxValidationAttributes}
               />
               <Form.Text className="text-muted">
-                Insert a link including the protocol, ex. https://foo.bar/baz
+                {MEDIA_CONTENT.ADD_DESCRIPTION}
               </Form.Text>
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={addVideo} variant="success" disabled={!isValid}>
+          <Button onClick={addMediaItem} variant="success" disabled={!isValid}>
             {adding ? (
               <Spinner animation="border" size="sm" />
             ) : (
-              "Add the video"
+              BUTTONS.ADD_CONFIRM
             )}
           </Button>
-          <Button onClick={hideModal}>Cancel</Button>
+          <Button onClick={hideModal}>{BUTTONS.CANCEL}</Button>
         </Modal.Footer>
       </Modal>
     </>

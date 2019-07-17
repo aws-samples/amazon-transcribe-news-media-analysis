@@ -32,13 +32,13 @@ public class TranscribedSegmentWriter {
 
     private DynamoDbClient ddbClient;
     private String ddbTableName;
-    private String videoUrl;
+    private String mediaUrl;
 
 
-    public TranscribedSegmentWriter(DynamoDbClient ddbClient, String ddbTableName, String videoUrl) {
+    public TranscribedSegmentWriter(DynamoDbClient ddbClient, String ddbTableName, String mediaUrl) {
         this.ddbClient = ddbClient;
         this.ddbTableName = ddbTableName;
-        this.videoUrl = videoUrl;
+        this.mediaUrl = mediaUrl;
     }
 
     public DynamoDbClient getDdbClient() {
@@ -63,7 +63,7 @@ public class TranscribedSegmentWriter {
 
         Map<String,AttributeValue> itemValues = new HashMap<>();
 
-        itemValues.put("VideoUrl", AttributeValue.builder().s(videoUrl).build());
+        itemValues.put("MediaUrl", AttributeValue.builder().s(mediaUrl).build());
         itemValues.put("ResultId", AttributeValue.builder().s(result.resultId()).build());
         itemValues.put("FragmentTimestamp", AttributeValue.builder().n(Long.toString(responseTime)).build());
         itemValues.put("Transcript", AttributeValue.builder().s(transcript).build());

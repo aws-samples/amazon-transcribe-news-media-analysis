@@ -1,11 +1,11 @@
-export default videoUrl => {
+export default mediaUrl => {
   const settings = {
     autoplay: true,
     controls: true,
-    sources: [{ src: videoUrl }]
+    sources: [{ src: mediaUrl }]
   };
 
-  const isYouTube = videoUrl.match(/^(https?:\/\/)?(www.)?(youtube.com|youtu.?be)\/.+$/) !== null;
+  const isYouTube = mediaUrl.match(/^(https?:\/\/)?(www.)?(youtube.com|youtu.?be)\/.+$/) !== null;
   if (isYouTube) settings.sources[0].type = "video/youtube";
 
   return settings;

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { Button, Modal, Spinner } from "react-bootstrap";
 
-import { TASK_DELETE_CONFIRMATION } from "../utils/strings";
+import { BUTTONS, GENERIC, MEDIA_CONTENT } from "../utils/strings";
 
 export default ({ onConfirm, onDeleted, onError }) => {
   const [confirmationShown, showConfirmation] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const hideModal = () => showConfirmation(false);
-  const deleteVideo = () => {
+  const deleteMediaItem = () => {
     setDeleting(true);
 
     const afterDeletion = () => {
@@ -30,7 +30,7 @@ export default ({ onConfirm, onDeleted, onError }) => {
   return (
     <>
       <Button size="sm" variant="danger" onClick={() => showConfirmation(true)}>
-        Remove
+        {BUTTONS.REMOVE}
       </Button>
       <Modal
         size="lg"
@@ -40,23 +40,23 @@ export default ({ onConfirm, onDeleted, onError }) => {
         style={{ color: "black" }}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Are you sure?</Modal.Title>
+          <Modal.Title>{MEDIA_CONTENT.REMOVE_TITLE}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {TASK_DELETE_CONFIRMATION}
+          {MEDIA_CONTENT.REMOVE_DESCRIPTION}
           <br />
           <br />
-          <strong>Do you wish to continue?</strong>
+          <strong>{GENERIC.CONTINUE_CONFIRMATION}</strong>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={deleteVideo} variant="danger">
+          <Button onClick={deleteMediaItem} variant="danger">
             {deleting ? (
               <Spinner animation="border" size="sm" />
             ) : (
-              "Remove the video"
+              BUTTONS.REMOVE_CONFIRM
             )}
           </Button>
-          <Button onClick={hideModal}>Cancel</Button>
+          <Button onClick={hideModal}>{BUTTONS.CANCEL}</Button>
         </Modal.Footer>
       </Modal>
     </>
