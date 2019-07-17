@@ -6,7 +6,7 @@ import { getUrlParameter, sortByKey } from "./utils";
 
 import ErrorAlert from "./components/ErrorAlert";
 import Header from "./components/Header";
-import MediaItem from "./components/MediaItem";
+import MediaContent from "./components/MediaContent";
 import Media from "./components/Media";
 
 export default () => {
@@ -37,7 +37,7 @@ export default () => {
       <Container>
         <ErrorAlert show={errorShown} />
         {watchMode ? (
-          <MediaItem
+          <MediaContent
             getTask={() => gateway.getTask(mediaUrl)}
             poll={gateway.poll}
             mediaUrl={mediaUrl}

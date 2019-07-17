@@ -1,11 +1,11 @@
 import React from "react";
 import { Button, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
 
-import { TASKSTATUS_TOOLTIPS } from "../utils/strings";
+import { BUTTONS, GENERIC, TASKSTATUS_TOOLTIPS } from "../utils/strings";
 import { toObj } from "../utils";
 
-import AddMedia from "./AddMedia";
-import DeleteMedia from "./DeleteMedia";
+import AddMediaContent from "./AddMediaContent";
+import DeleteMediaContent from "./DeleteMediaContent";
 import WatchUrlTextbox from "./WatchUrlTextbox";
 
 const { maxTasks } = window.mediaAnalysisSettings;
@@ -14,12 +14,12 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
   <Table variant="dark">
     <thead>
       <tr>
-        <th>Media URL</th>
-        <th>Status</th>
-        <th>Watch URL</th>
+        <th>{GENERIC.MEDIA_URL}</th>
+        <th>{GENERIC.STATUS}</th>
+        <th>{GENERIC.WATCH_URL}</th>
         <th>
           <Button onClick={updateTasks} size="sm" variant="warning">
-            Refresh
+            {BUTTONS.REFRESH}
           </Button>
         </th>
       </tr>
@@ -55,7 +55,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
           </td>
           <td>
             {task.taskStatus === "PROCESSING" && (
-              <DeleteMedia
+              <DeleteMediaContent
                 onConfirm={() => deleteTask(task.mediaUrl)}
                 onDeleted={updateTasks}
                 onError={onError}
@@ -70,7 +70,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
           <td />
           <td />
           <td>
-            <AddMedia
+            <AddMediaContent
               onAdded={updateTasks}
               onError={onError}
               onSubmit={addTask}

@@ -1,5 +1,33 @@
-export const TASK_DELETE_CONFIRMATION =
-  "After deletion, the processing task will be scheduled for removal. The process may take a couple of minutes. ";
+export const BUTTONS = {
+  ADD: "Add New...",
+  ADD_CONFIRM: "Add the Media Content",
+  CANCEL: "Cancel",
+  REFRESH: "Refresh",
+  REMOVE: "Remove",
+  REMOVE_CONFIRM: "Remove the Media Content"
+};
+
+export const GENERIC = {
+  CONTINUE_CONFIRMATION: "Do you wish to continue?",
+  COPIED: "Copied!",
+  COPY_TO_CLIPBOAD: "Copy to Clipboard",
+  FORK_GITHUB: "Fork me on Github",
+  MEDIA_URL: "Media URL",
+  OPEN_NEW_WINDOW: "Open in a new window",
+  SOLUTION_TITLE: "Amazon Transcribe News Media Analysis",
+  STATUS: "Status",
+  WATCH_URL: "Watch URL"
+};
+
+export const MEDIA_CONTENT = {
+  ADD_DESCRIPTION:
+    "Insert a link including the protocol, ex. https://foo.bar/baz",
+  NEW_TITLE: "New Media Content",
+  REMOVE_DESCRIPTION:
+    "After deletion, the processing task will be scheduled for removal. The process may take a couple of minutes.",
+  REMOVE_TITLE: "Delete Media Content",
+  URL: "Media Content Url"
+};
 
 export const TASKSTATUS_MESSAGE = {
   ERROR:
