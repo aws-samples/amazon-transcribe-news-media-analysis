@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 
+import { GENERIC } from "../utils/strings";
 import { RESET_CLIPBOARDCOPY_REF } from "../utils/timers";
 
 import Icon from "./Icon";
@@ -42,7 +43,7 @@ export default ({ mediaUrl }) => {
           placement="bottom"
           overlay={
             <Tooltip id="tooltip-copy">
-              {copied ? <strong>Copied!</strong> : "Copy to clipboard"}
+              {GENERIC[copied ? "COPIED" : "COPY_TO_CLIPBOAD"]}
             </Tooltip>
           }
         >
@@ -54,7 +55,7 @@ export default ({ mediaUrl }) => {
           key="new-window"
           placement="bottom"
           overlay={
-            <Tooltip id="tooltip-new-window">Open in a new window</Tooltip>
+            <Tooltip id="tooltip-new-window">{GENERIC.OPEN_NEW_WINDOW}</Tooltip>
           }
         >
           <Button onClick={openInNewWindow} variant="outline-dark">

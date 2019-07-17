@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Button, Form, Modal, Spinner } from "react-bootstrap";
 
+import { BUTTONS, MEDIA_CONTENT } from "../utils/strings";
+
 export default ({ onSubmit, onAdded, onError, tasks }) => {
   const [addModalShown, showAddModal] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -36,7 +38,7 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
   return (
     <>
       <Button size="sm" variant="success" onClick={() => showAddModal(true)}>
-        Add New...
+        {BUTTONS.ADD}
       </Button>
       <Modal
         size="lg"
@@ -46,12 +48,12 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
         style={{ color: "black" }}
       >
         <Modal.Header closeButton>
-          <Modal.Title>New Media Item</Modal.Title>
+          <Modal.Title>{MEDIA_CONTENT.NEW_TITLE}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Form.Group controlId="mediaUrl">
-              <Form.Label>Media Item Url</Form.Label>
+              <Form.Label>{MEDIA_CONTENT.URL}</Form.Label>
               <Form.Control
                 onChange={e => setMediaUrl(e.target.value)}
                 required
@@ -59,7 +61,7 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
                 {...textboxValidationAttributes}
               />
               <Form.Text className="text-muted">
-                Insert a link including the protocol, ex. https://foo.bar/baz
+                {MEDIA_CONTENT.ADD_DESCRIPTION}
               </Form.Text>
             </Form.Group>
           </Form>
@@ -69,10 +71,10 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
             {adding ? (
               <Spinner animation="border" size="sm" />
             ) : (
-              "Add the media item"
+              BUTTONS.ADD_CONFIRM
             )}
           </Button>
-          <Button onClick={hideModal}>Cancel</Button>
+          <Button onClick={hideModal}>{BUTTONS.CANCEL}</Button>
         </Modal.Footer>
       </Modal>
     </>
