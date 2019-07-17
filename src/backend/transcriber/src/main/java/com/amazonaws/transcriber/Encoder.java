@@ -17,6 +17,8 @@
 package com.amazonaws.transcriber;
 
 import com.google.common.base.Strings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -25,27 +27,28 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class Encoder extends Ffmpeg {
-    private final Ffmpeg.LogLevel logLevel;
+    private static final Logger logger = LogManager.getLogger(Encoder.class);
+
     private final String inputFormat;
     private final String input;
-    private final String output;
+    private final Ffmpeg.LogLevel logLevel;
+
     
-    Encoder(Logger logger, String path, Ffmpeg.LogLevel logLevel, String inputFormat, String input, String output) {
-        super("encoder", logger, path, Pattern.compile("^(?!(\\[info\\] (frame|size)=|\\[https @ 0x[0123456789abcdef]*\\] \\[info\\]|\\[hls,applehttp @ 0x[0123456789abcdef]{12}\\] \\[info\\])).+$"));
+    Encoder(String path, Ffmpeg.LogLevel logLevel, String inputFormat, String input) {
+        super("encoder", path, Pattern.compile("^(?!(\\[info\\] (frame|size)=|\\[https @ 0x[0123456789abcdef]*\\] \\[info\\]|\\[hls,applehttp @ 0x[0123456789abcdef]{12}\\] \\[info\\])).+$"));
         if (Strings.isNullOrEmpty(input)) {
             throw new IllegalArgumentException("input cannot be null or empty");
         }
-        this.logLevel = logLevel;
         this.inputFormat = inputFormat;
         this.input = input;
-        this.output = output; // example is "udp://localhost:1234" 
+        this.logLevel = logLevel;
     }
     
     public InputStream start() {
         Ffmpeg.LogLevel minLogLevel = Ffmpeg.LogLevel.From(Math.max(Ffmpeg.LogLevel.INFO.getValue(), logLevel.getValue()));
         String minLogLevelString = minLogLevel.toString().toLowerCase();
         
-        List<String> args = new ArrayList(Arrays.asList(
+        List<String> args = new ArrayList<>(Arrays.asList(
             "-hide_banner",
             "-loglevel", "level+" + minLogLevelString/*,
             "-re" //realtime */
@@ -63,18 +66,6 @@ public class Encoder extends Ffmpeg {
             "-f", "s16le",
             "-" //output to stdout
         ));
-
-        if (!Strings.isNullOrEmpty(output)) {
-            args.addAll(Arrays.asList(
-                "-vf", "scale=w=960:h=540:force_original_aspect_ratio=decrease"
-                    + ",drawtext=fontfile=/Library/Fonts/arial.ttf:fontsize=64:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2:text='%{localtime}'",
-                "-c:v", "libx264",
-                "-b:v", "500k",
-                "-b:a", "128k",
-                "-f", "mpegts",
-                output
-            ));
-        }
         
         return super.start(args);
     }
