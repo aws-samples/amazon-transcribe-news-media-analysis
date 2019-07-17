@@ -1,3 +1,5 @@
+export const contains = (obj, key) => !!obj[key.trim()];
+
 export const formatDate = ts => new Date(ts).toString();
 
 export const getCurrentLocation = () => window.location.href;
@@ -13,6 +15,10 @@ export const getUrlParameter = name => {
     ? ""
     : decodeURIComponent(results[1].replace(/\+/g, " "));
 };
+
+export const isEmpty = s => s.trim() === "";
+
+export const isUrl = s => s.indexOf("http") === 0;
 
 export const refreshPage = e => {
   e.preventDefault();
