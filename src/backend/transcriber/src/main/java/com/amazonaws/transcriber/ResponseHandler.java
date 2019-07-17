@@ -20,6 +20,7 @@ import com.amazonaws.transcribestreaming.retryclient.StreamTranscriptionBehavior
 import com.amazonaws.utils;
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -36,29 +37,21 @@ import static com.google.common.base.Predicates.not;
 public class ResponseHandler implements StreamTranscriptionBehavior {
     private static final Logger logger = LogManager.getLogger(ResponseHandler.class);
 
-    private static final int DEBOUNCE_DURATION = utils.parseEnvVar("DEBOUNCE_DURATION", 1000);
+    private TranscriberConfig config = TranscriberConfig.getInstance();
+
+    private final int DEBOUNCE_DURATION = config.debounceDuration();
 
     private long debounceTime;
 
-    private final String mediaUrl;
-
     private String requestId;
     private String sessionId;
-    private DynamoDbClient ddbClient;
-    private String ddbTableName = Validate.notNull(System.getenv("DYNAMO_DB_TABLE"));
     private TranscribedSegmentWriter writer;
-
-    private final EnumSet<TranscribeResultTypes> stdOutResultTypes;
 
     private Instant responseTime;
 
-    public ResponseHandler(String mediaUrl, AwsCredentialsProvider credentialsProvider, Region region,
-                           EnumSet<TranscribeResultTypes> stdOutResultTypes) {
-        this.mediaUrl = mediaUrl;
-        this.stdOutResultTypes = stdOutResultTypes;
+    public ResponseHandler(String mediaUrl) {
         this.debounceTime = System.currentTimeMillis();
-        this.ddbClient = DynamoDbClient.builder().credentialsProvider(credentialsProvider).region(region).build();
-        this.writer = new TranscribedSegmentWriter(ddbClient, ddbTableName, mediaUrl);
+        this.writer = new TranscribedSegmentWriter(DynamoDbClient.create(), config.transcriptsDynamoDbTable(), mediaUrl);
     }
 
     @Override
@@ -86,7 +79,7 @@ public class ResponseHandler implements StreamTranscriptionBehavior {
 
     private void logResult(TranscribeStreamData streamData) {
         Result result = streamData.getResult();
-        if(!result.isPartial() || stdOutResultTypes.contains(TranscribeResultTypes.PARTIAL)) {
+        if(!result.isPartial() || logger.getLevel() == Level.DEBUG) {
             Instant started = responseTime.plusMillis(Math.round(1000 * result.startTime()));
             Instant ended = responseTime.plusMillis(Math.round(1000 * result.endTime()));
             String info = result.isPartial() ? "PARTIAL" : "COMPLETE";
@@ -102,7 +95,7 @@ public class ResponseHandler implements StreamTranscriptionBehavior {
         Transcript transcript = ((TranscriptEvent) event).transcript();
 
         transcript.results().stream()
-            .filter(result -> !(result.isPartial() && shouldDebounce()))
+            .filter(not(result ->result.isPartial() && shouldDebounce()))
             .flatMap(result -> result.alternatives().stream().limit(1)
                 .map(Alternative::transcript)
                 .filter(not(Strings::isNullOrEmpty))
