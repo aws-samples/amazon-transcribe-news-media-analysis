@@ -21,6 +21,8 @@ import com.amazonaws.transcribestreaming.AudioStreamPublisher;
 import com.amazonaws.transcribestreaming.retryclient.StreamTranscriptionBehavior;
 import com.amazonaws.transcribestreaming.retryclient.TranscribeStreamingRetryClient;
 import com.google.common.base.Strings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.transcribestreaming.TranscribeStreamingAsyncClient;
@@ -31,14 +33,11 @@ import software.amazon.awssdk.services.transcribestreaming.model.StartStreamTran
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.EnumSet;
+
 import java.util.concurrent.ExecutionException;
 
 public class Transcriber {
-    private final Logger.Log log;
-    
-    private final Region region;
-    private final AwsCredentialsProvider credentials;
+    private static final Logger logger = LogManager.getLogger(Transcriber.class);
     
     private final MediaEncoding encoding;
     private final int sampleRate; 
@@ -49,31 +48,22 @@ public class Transcriber {
     private TranscribeStreamingRetryClient retryClient;
     private AudioStreamPublisher audioStreamPublisher;
 
-    public Transcriber(Logger logger, String mediaUrl, AwsCredentialsProvider credentialsProvider, Region region,
-            LanguageCode language, 
-            MediaEncoding encoding, int sampleRate, String vocabularyName,
-            EnumSet<TranscribeResultTypes> stdOutResultTypes) {
-        this.log = logger.getLog("transcriber");
-        
-        this.region = region;
-        this.credentials = credentialsProvider;
+    public Transcriber(String mediaUrl, LanguageCode language, MediaEncoding encoding,
+                       int sampleRate, String vocabularyName) {
 
         this.encoding = encoding;
         this.sampleRate = sampleRate;
         this.language = language;
         this.vocabularyName = vocabularyName;
 
-        this.handler = new ResponseHandler(mediaUrl, credentialsProvider, region, stdOutResultTypes);
+        this.handler = new ResponseHandler(mediaUrl);
     }
 
     public void start(InputStream inputStream) throws InterruptedException, ExecutionException {
         if (audioStreamPublisher != null) {
             throw new IllegalStateException("Already running");
         }
-        TranscribeStreamingAsyncClient asyncClient = TranscribeStreamingAsyncClient.builder()
-            .credentialsProvider(credentials)
-            .region(region)
-            .build();
+        TranscribeStreamingAsyncClient asyncClient = TranscribeStreamingAsyncClient.create();
         retryClient = new TranscribeStreamingRetryClient(asyncClient);
         StartStreamTranscriptionRequest.Builder requestBuilder = StartStreamTranscriptionRequest.builder()
             .languageCode(language.toString())
@@ -92,7 +82,7 @@ public class Transcriber {
             try {
                 audioStreamPublisher.close();
             } catch (IOException ex) {
-                log.error("Error closing audio stream", ex);
+                logger.error("Error closing audio stream", ex);
             } finally {
                 audioStreamPublisher = null;
                 retryClient.close();
