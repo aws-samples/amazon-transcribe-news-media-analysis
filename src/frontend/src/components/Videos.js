@@ -1,25 +1,14 @@
 import React from "react";
 import { Button, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
 
+import { TASKSTATUS_TOOLTIPS } from "../utils/strings";
+import { toObj } from "../utils";
+
 import AddVideo from "./AddVideo";
 import DeleteVideo from "./DeleteVideo";
 import WatchUrlTextbox from "./WatchUrlTextbox";
 
-import { toObj } from "../utils";
-
 const { maxTasks } = window.mediaAnalysisSettings;
-
-const statusTooltips = {
-  ERROR:
-    "The task for processing the video is in a faulty state and waiting for being re-allocated",
-  INITIALIZING:
-    "The task for processing the video has been allocated, and the job will start processing soon",
-  PROCESSING: "The video is being processed",
-  TERMINATING:
-    "The task for processing the video has been scheduled for termination",
-  WAITING:
-    "The video is waiting for a task to be allocated, in order to start processing"
-};
 
 export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
   <Table variant="dark">
@@ -54,7 +43,7 @@ export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
               placement="bottom"
               overlay={
                 <Tooltip id={`tooltip-status-${index}`}>
-                  {statusTooltips[task.taskStatus]}
+                  {TASKSTATUS_TOOLTIPS[task.taskStatus]}
                 </Tooltip>
               }
             >
