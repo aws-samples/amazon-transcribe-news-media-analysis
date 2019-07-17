@@ -231,6 +231,8 @@ Resources:
                         {
                           "tasks": [
                             #foreach($elem in $inputRoot.Items) {
+                              "mediaDescription": "$util.escapeJavaScript($elem.MediaDescription.S).replaceAll("\\'","'")",
+                              "mediaTitle": "$util.escapeJavaScript($elem.MediaTitle.S).replaceAll("\\'","'")",
                               "mediaUrl": "$elem.MediaUrl.S",
                               "taskStatus": "$elem.TaskStatus.S",
                               "taskId": "$elem.TaskId.S"
@@ -242,7 +244,7 @@ Resources:
                   application/json: !Sub |
                     {
                       "TableName": "${TasksDynamoTable}",
-                      "ProjectionExpression": "MediaUrl, TaskStatus, TaskId",
+                      "ProjectionExpression": "MediaDescription, MediaTitle, MediaUrl, TaskStatus, TaskId",
                       "ConsistentRead": true
                     }
                 passthroughBehavior: when_no_match
@@ -279,6 +281,8 @@ Resources:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
                         #foreach($elem in $inputRoot.Items) {
+                          "mediaDescription": "$util.escapeJavaScript($elem.MediaDescription.S).replaceAll("\\'","'")",
+                          "mediaTitle": "$util.escapeJavaScript($elem.MediaTitle.S).replaceAll("\\'","'")",
                           "mediaUrl": "$elem.MediaUrl.S",
                           "taskStatus": "$elem.TaskStatus.S",
                           "taskId": "$elem.TaskId.S"
@@ -385,8 +389,14 @@ Resources:
                     {
                       "TableName": "${TasksDynamoTable}",
                       "Item": {
+                        "MediaDescription": {
+                          "S": $input.json('$.mediaDescription')
+                        },
                         "MediaUrl": {
                           "S": "$util.urlDecode($input.params('mediaUrl'))"
+                        },
+                        "MediaTitle": {
+                          "S": $input.json('$.mediaTitle')
                         },
                         "TaskStatus": {
                           "S": "WAITING"
