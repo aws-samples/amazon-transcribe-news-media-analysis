@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Button, Modal, Spinner } from "react-bootstrap";
 
+import { TASK_DELETE_CONFIRMATION } from "../utils/strings";
+
 export default ({ onConfirm, onDeleted, onError }) => {
   const [confirmationShown, showConfirmation] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -41,9 +43,10 @@ export default ({ onConfirm, onDeleted, onError }) => {
           <Modal.Title>Are you sure?</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          After deletion, the processing task will be scheduled for removal. The
-          process may take a couple of minutes. <br />
-          <br /> <strong>Do you wish to continue?</strong>
+          {TASK_DELETE_CONFIRMATION}
+          <br />
+          <br />
+          <strong>Do you wish to continue?</strong>
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={deleteVideo} variant="danger">

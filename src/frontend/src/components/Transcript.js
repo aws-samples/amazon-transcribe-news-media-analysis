@@ -1,20 +1,47 @@
-import React, { useEffect, useRef } from "react";
-
+import React, { useEffect, useRef, useReducer, useState } from "react";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
 
-import { scrollToDiv } from "../utils";
+import { formatDate, getUTCTimestamp, scrollToDiv, sortByKey } from "../utils";
+import { POLL_INTERVAL } from "../utils/timers";
 
-const format = ts => new Date(ts).toString();
-
-export default ({ transcript }) => {
+export default ({ poll, showError, videoUrl }) => {
   const textDiv = useRef(undefined);
+  const [watermark, setWatermark] = useState(getUTCTimestamp());
+  const [transcript, addTranscriptions] = useReducer(
+    (transcriptions, newTranscriptions) => {
+      const withoutPartials = transcriptions.filter(el => !el.isPartial);
+      return [...withoutPartials, ...newTranscriptions];
+    },
+    []
+  );
 
   useEffect(() => {
-    if (typeof textDiv !== "undefined") scrollToDiv(textDiv.current);
-  }, [transcript]);
+    const fetchSubtitles = () =>
+      poll(videoUrl, watermark, getUTCTimestamp())
+        .then(r => {
+          const serialized = sortByKey(r.fragments, "timestamp");
+          const fullFragments = serialized.filter(el => !el.isPartial);
+          addTranscriptions(serialized);
+
+          if (fullFragments.length > 0) {
+            const lastTimestamp =
+              fullFragments[fullFragments.length - 1].timestamp;
+
+            setTimeout(() => setWatermark(lastTimestamp + 1), POLL_INTERVAL);
+          } else setTimeout(fetchSubtitles, POLL_INTERVAL);
+        })
+        .catch(e => showError(true));
+
+    fetchSubtitles();
+  }, [poll, showError, videoUrl, watermark]);
+
+  useEffect(() => {
+    scrollToDiv(textDiv.current);
+  });
+
   return (
     <div
-      style={{ maxHeight: "480px", overflow: "scroll" }}
+      style={{ maxHeight: "480px", overflow: "scroll", textAlign: "left" }}
       ref={x => (textDiv.current = x)}
     >
       {transcript.map((row, index) => (
@@ -22,13 +49,15 @@ export default ({ transcript }) => {
           key={`ot-t-${index}`}
           placement="left"
           overlay={
-            <Tooltip id={`tooltip-t-${index}`}>{format(row.timestamp)}</Tooltip>
+            <Tooltip id={`tooltip-t-${index}`}>
+              {formatDate(row.timestamp)}
+            </Tooltip>
           }
         >
-          <span className={row.isPartial ? "partial transcript" : "transcript"}>
+          <div className={row.isPartial ? "partial transcript" : "transcript"}>
             {row.transcript}
-            {row.isPartial ? "..." : " "}
-          </span>
+            {row.isPartial && "..."}
+          </div>
         </OverlayTrigger>
       ))}
     </div>

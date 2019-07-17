@@ -12,6 +12,7 @@
     "lambda-inline": "cd src/backend/functions/setup && npm run inline",
     "postinstall": "cd src/frontend && npm i && cd ../backend/functions/setup && npm i",
     "start": "cd src/frontend && npm start",
+    "test": "cd src/frontend && npm t",
     "webui-build": "cd src/frontend && npm run build",
     "webui-deploy": "cd src/frontend/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
     "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive"
