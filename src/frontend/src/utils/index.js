@@ -18,7 +18,7 @@ export const getUrlParameter = name => {
 
 export const isEmpty = s => s.trim() === "";
 
-export const isUrl = s => s.indexOf("http") === 0;
+export const isUrl = s => s.match(/^https?:\/\//i) !== null;
 
 export const refreshPage = e => {
   e.preventDefault();
