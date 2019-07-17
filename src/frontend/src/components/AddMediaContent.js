@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { Button, Form, Modal, Spinner } from "react-bootstrap";
 
-import { BUTTONS, MEDIA_CONTENT } from "../utils/strings";
+import { contains, isEmpty, isUrl } from "../utils";
+import { BUTTONS, GENERIC, MEDIA_CONTENT } from "../utils/strings";
 
 export default ({ onSubmit, onAdded, onError, tasks }) => {
   const [addModalShown, showAddModal] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [mediaDescription, setMediaDescription] = useState("");
+  const [mediaTitle, setMediaTitle] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
 
   const hideModal = () => showAddModal(false);
@@ -15,6 +18,9 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
     const afterAdding = () => {
       hideModal();
       setAdding(false);
+      setMediaDescription("");
+      setMediaTitle("");
+      setMediaUrl("");
       onAdded();
     };
 
@@ -23,17 +29,18 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
       onError();
     };
 
-    return onSubmit(mediaUrl)
+    return onSubmit({ mediaDescription, mediaTitle, mediaUrl })
       .then(afterAdding)
       .catch(withError);
   };
 
-  const mediaAlreadyPresent = !!tasks[mediaUrl.trim()];
-  const isValid = mediaUrl.indexOf("http") === 0 && !mediaAlreadyPresent;
+  const isMediaTitleValid = !isEmpty(mediaTitle);
+  const isMediaUrlValid = isUrl(mediaUrl) && !contains(tasks, mediaUrl);
 
-  const textboxValidationAttributes = isValid
-    ? { isValid: true }
-    : { isInvalid: true };
+  const validationAttributes = isValid =>
+    isValid ? { isValid: true } : { isInvalid: true };
+
+  const submitEnabled = isMediaUrlValid && isMediaTitleValid;
 
   return (
     <>
@@ -51,23 +58,41 @@ export default ({ onSubmit, onAdded, onError, tasks }) => {
           <Modal.Title>{MEDIA_CONTENT.NEW_TITLE}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
+          <Form style={{ textAlign: "left" }}>
+            <Form.Group controlId="mediaTitle">
+              <Form.Label>{GENERIC.TITLE}</Form.Label>
+              <Form.Control
+                onChange={e => setMediaTitle(e.target.value)}
+                type="text"
+                {...validationAttributes(isMediaTitleValid)}
+              />
+            </Form.Group>
             <Form.Group controlId="mediaUrl">
               <Form.Label>{MEDIA_CONTENT.URL}</Form.Label>
               <Form.Control
                 onChange={e => setMediaUrl(e.target.value)}
-                required
                 type="text"
-                {...textboxValidationAttributes}
+                {...validationAttributes(isMediaUrlValid)}
               />
               <Form.Text className="text-muted">
                 {MEDIA_CONTENT.ADD_DESCRIPTION}
               </Form.Text>
             </Form.Group>
+            <Form.Group controlId="mediaTitle">
+              <Form.Label>{GENERIC.DESCRIPTION}</Form.Label>
+              <Form.Control
+                onChange={e => setMediaDescription(e.target.value)}
+                as="textarea"
+              />
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={addMediaItem} variant="success" disabled={!isValid}>
+          <Button
+            onClick={addMediaItem}
+            variant="success"
+            disabled={!submitEnabled}
+          >
             {adding ? (
               <Spinner animation="border" size="sm" />
             ) : (

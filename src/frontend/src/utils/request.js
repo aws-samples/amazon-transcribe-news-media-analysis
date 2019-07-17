@@ -20,5 +20,6 @@ Amplify.configure({
 
 export default (url, method, data) =>
   API[method || "get"]("apiGateway", url, {
+    body: data || undefined,
     headers: { "Content-Type": "application/json" }
   });

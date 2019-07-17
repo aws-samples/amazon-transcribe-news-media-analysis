@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import videojs from "video.js";
 import "videojs-youtube";
@@ -10,11 +10,24 @@ import { FETCH_TASKSTATUS_RETRY } from "../utils/timers";
 import ErrorAlert from "./ErrorAlert";
 import Transcript from "./Transcript";
 
+const renderWithLineBreaks = text =>
+  text.split("\n").map((item, key) => (
+    <Fragment key={key}>
+      {item}
+      <br />
+    </Fragment>
+  ));
+
 export default ({ getTask, poll, mediaUrl }) => {
   const videoNode = useRef(null);
   const [errorShown, showError] = useState(false);
-  const [taskStatus, setTaskStatus] = useState("LOADING");
+  const [mediaDetails, setMediaDetails] = useState({
+    mediaUrl,
+    taskStatus: "LOADING"
+  });
   const [videoShown, showVideo] = useState(false);
+
+  const videoInitialized = useRef(false);
 
   const playerSettings = getPlayerSettings(mediaUrl);
 
@@ -23,27 +36,26 @@ export default ({ getTask, poll, mediaUrl }) => {
       s === "ERROR" || s === "WAITING" || s === "INITIALIZING";
     const shouldShowVideo = s => s !== "TERMINATING";
 
-    const fetchStatusAndShowVideo = () =>
+    const fetchDetailsAndShowVideo = () =>
       getTask()
         .then(task => {
-          setTaskStatus(task.taskStatus);
+          setMediaDetails(task);
           if (notProcessing(task.taskStatus)) {
-            setTimeout(fetchStatusAndShowVideo, FETCH_TASKSTATUS_RETRY);
+            setTimeout(fetchDetailsAndShowVideo, FETCH_TASKSTATUS_RETRY);
           }
 
-          showVideo(shouldShowVideo(task.taskStatus));
+          if (!videoShown) showVideo(shouldShowVideo(task.taskStatus));
         })
         .catch(e => showError(true));
 
-    fetchStatusAndShowVideo();
-  }, [getTask]);
+    fetchDetailsAndShowVideo();
+  }, [getTask, videoShown]);
 
   useEffect(() => {
-    if (videoShown) {
-      let player;
+    if (videoShown && !videoInitialized.current) {
+      videoInitialized.current = true;
       const element = videoNode.current;
-      setTimeout(() => (player = videojs(element, playerSettings)), 1000);
-      return () => (player ? player.dispose() : {});
+      setTimeout(() => videojs(element, playerSettings), 1000);
     }
   }, [playerSettings, videoShown]);
 
@@ -51,10 +63,29 @@ export default ({ getTask, poll, mediaUrl }) => {
     <div data-vjs-player>
       <Container>
         <Row>
-          <Col sm={12}>
-            <Alert variant="dark">{mediaUrl}</Alert>
+          <Col sm={12} style={{ textAlign: "left" }}>
+            <Alert variant="dark">
+              {mediaDetails.mediaTitle && (
+                <div style={{ fontWeight: "bold" }}>
+                  {mediaDetails.mediaTitle}
+                </div>
+              )}
+              <a
+                href={mediaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "underline" }}
+              >
+                {mediaUrl}
+              </a>
+              {mediaDetails.mediaDescription && (
+                <div style={{ marginTop: "10px" }}>
+                  {renderWithLineBreaks(mediaDetails.mediaDescription)}
+                </div>
+              )}
+            </Alert>
             <ErrorAlert show={errorShown} />
-            {taskStatus === "TERMINATING" && (
+            {mediaDetails.taskStatus === "TERMINATING" && (
               <Alert variant="danger">{TASKSTATUS_MESSAGE.TERMINATING}</Alert>
             )}
           </Col>
@@ -71,28 +102,29 @@ export default ({ getTask, poll, mediaUrl }) => {
             )}
           </Col>
           <Col sm={4}>
-            {taskStatus === "LOADING" && (
+            {mediaDetails.taskStatus === "LOADING" && (
               <>
                 <Spinner animation="border" />
                 <br />
                 <span>{TASKSTATUS_MESSAGE.LOADING}</span>
               </>
             )}
-            {taskStatus === "PROCESSING" && (
+            {mediaDetails.taskStatus === "PROCESSING" && (
               <Transcript
                 poll={poll}
                 showError={showError}
                 mediaUrl={mediaUrl}
               />
             )}
-            {taskStatus === "ERROR" && (
+            {mediaDetails.taskStatus === "ERROR" && (
               <Alert variant="danger">
                 <Spinner animation="border" />
                 <br />
                 {TASKSTATUS_MESSAGE.ERROR}
               </Alert>
             )}
-            {(taskStatus === "WAITING" || taskStatus === "INITIALIZING") && (
+            {(mediaDetails.taskStatus === "WAITING" ||
+              mediaDetails.taskStatus === "INITIALIZING") && (
               <Alert variant="warning">
                 <Spinner animation="border" />
                 <br />
