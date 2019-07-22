@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import videojs from "video.js";
 import "videojs-youtube";
@@ -9,15 +9,7 @@ import { FETCH_TASKSTATUS_RETRY } from "../utils/timers";
 
 import ErrorAlert from "./ErrorAlert";
 import Transcript from "./Transcript";
-import { getUTCTimestamp } from "../utils";
-
-const renderWithLineBreaks = text =>
-  text.split("\n").map((item, key) => (
-    <Fragment key={key}>
-      {item}
-      <br />
-    </Fragment>
-  ));
+import { getUTCTimestamp, renderWithLineBreaks } from "../utils";
 
 export default ({ getTask, poll, mediaUrl }) => {
   const [errorShown, showError] = useState(false);
@@ -36,14 +28,12 @@ export default ({ getTask, poll, mediaUrl }) => {
 
   const getCurrentTimestamp = () => {
     if (!player.current) return undefined;
-    if (!startedPlayingDate.current)
-      startedPlayingDate.current =
-        getUTCTimestamp() - Math.round(player.current.currentTime() * 1000);
 
-    return (
-      startedPlayingDate.current +
-      Math.round(player.current.currentTime() * 1000)
-    );
+    const currentMs = Math.round(player.current.currentTime() * 1000);
+    if (!startedPlayingDate.current)
+      startedPlayingDate.current = getUTCTimestamp() - currentMs;
+
+    return startedPlayingDate.current + currentMs;
   };
 
   useEffect(() => {

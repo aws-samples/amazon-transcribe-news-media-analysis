@@ -1,3 +1,5 @@
+import React, { Fragment } from "react";
+
 export const contains = (obj, key) => !!obj[key.trim()];
 
 export const formatDate = ts => new Date(ts).toString();
@@ -24,6 +26,14 @@ export const refreshPage = e => {
   e.preventDefault();
   window.location.reload();
 };
+
+export const renderWithLineBreaks = text =>
+  text.split("\n").map((item, key) => (
+    <Fragment key={key}>
+      {item}
+      <br />
+    </Fragment>
+  ));
 
 export const scrollToDiv = el =>
   el ? (el.scrollTop = el.scrollHeight - el.clientHeight) : {};
