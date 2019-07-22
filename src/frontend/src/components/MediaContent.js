@@ -62,9 +62,7 @@ export default ({ getTask, poll, mediaUrl }) => {
       setTimeout(() => {
         player.current = videojs(element, playerSettings);
         player.current.on("ready", () => player.current.play());
-        player.current.on("playing", () =>
-          setTimeout(() => setPaused(false), 1000)
-        );
+        player.current.on("playing", () => setPaused(false));
         player.current.on("pause", () => setPaused(true));
       }, 1000);
     }
