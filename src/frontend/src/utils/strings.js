@@ -50,3 +50,8 @@ export const TASKSTATUS_TOOLTIPS = {
   WAITING:
     "The media content is waiting for a task to be allocated, in order to start processing"
 };
+
+export const TRANSCRIPTION_STATUS = {
+  PAUSED: "The transcription process stops when the video is paused. Click play to resume.",
+  STARTING: "The transcription process is about to start. Plase wait..."
+}

@@ -1,6 +1,5 @@
 export default mediaUrl => {
   const settings = {
-    autoplay: true,
     controls: true,
     sources: [{ src: mediaUrl }]
   };
