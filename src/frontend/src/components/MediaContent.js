@@ -1,8 +1,9 @@
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import videojs from "video.js";
 import "videojs-youtube";
 
+import { getUTCTimestamp, renderWithLineBreaks } from "../utils";
 import getPlayerSettings from "../utils/getPlayerSettings";
 import { TASKSTATUS_MESSAGE } from "../utils/strings";
 import { FETCH_TASKSTATUS_RETRY } from "../utils/timers";
@@ -10,26 +11,34 @@ import { FETCH_TASKSTATUS_RETRY } from "../utils/timers";
 import ErrorAlert from "./ErrorAlert";
 import Transcript from "./Transcript";
 
-const renderWithLineBreaks = text =>
-  text.split("\n").map((item, key) => (
-    <Fragment key={key}>
-      {item}
-      <br />
-    </Fragment>
-  ));
-
 export default ({ getTask, poll, mediaUrl }) => {
-  const videoNode = useRef(null);
   const [errorShown, showError] = useState(false);
   const [mediaDetails, setMediaDetails] = useState({
     mediaUrl,
     taskStatus: "LOADING"
   });
   const [videoShown, showVideo] = useState(false);
+  const [videoStatus, setVideoStatus] = useState("INIT");
 
-  const videoInitialized = useRef(false);
+  const player = useRef(undefined);
+  const startedPlayingDate = useRef(undefined);
+  const videoNode = useRef(null);
 
   const playerSettings = getPlayerSettings(mediaUrl);
+
+  const getCurrentTimestamp = () => {
+    if (
+      !player.current ||
+      (!startedPlayingDate.current && videoStatus === "INIT")
+    )
+      return undefined;
+
+    const currentMs = Math.round(player.current.currentTime() * 1000);
+    if (!startedPlayingDate.current)
+      startedPlayingDate.current = getUTCTimestamp() - currentMs;
+
+    return startedPlayingDate.current + currentMs;
+  };
 
   useEffect(() => {
     const notProcessing = s =>
@@ -52,10 +61,11 @@ export default ({ getTask, poll, mediaUrl }) => {
   }, [getTask, videoShown]);
 
   useEffect(() => {
-    if (videoShown && !videoInitialized.current) {
-      videoInitialized.current = true;
+    if (videoShown && !player.current) {
       const element = videoNode.current;
-      setTimeout(() => videojs(element, playerSettings), 1000);
+      player.current = videojs(element, playerSettings);
+      player.current.on("playing", () => setVideoStatus("PLAYING"));
+      player.current.on("pause", () => setVideoStatus("PAUSED"));
     }
   }, [playerSettings, videoShown]);
 
@@ -96,7 +106,6 @@ export default ({ getTask, poll, mediaUrl }) => {
               <video
                 ref={x => (videoNode.current = x)}
                 className="video-js"
-                autoPlay
                 style={{ width: "100%", height: "480px" }}
               />
             )}
@@ -111,9 +120,11 @@ export default ({ getTask, poll, mediaUrl }) => {
             )}
             {mediaDetails.taskStatus === "PROCESSING" && (
               <Transcript
+                getCurrentTimestamp={getCurrentTimestamp}
+                mediaUrl={mediaUrl}
                 poll={poll}
                 showError={showError}
-                mediaUrl={mediaUrl}
+                videoStatus={videoStatus}
               />
             )}
             {mediaDetails.taskStatus === "ERROR" && (
