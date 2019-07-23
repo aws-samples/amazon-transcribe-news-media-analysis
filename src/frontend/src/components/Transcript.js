@@ -65,7 +65,7 @@ export default ({
     scrollToDiv(textDiv.current);
   });
 
-  const transcriptionMaxHeight = 480 - (!isPlaying ? 88 : 0);
+  const transcriptionMaxHeight = 480 - (!isPlaying ? 104 : 0);
 
   return (
     <>
@@ -94,8 +94,11 @@ export default ({
           return (
             <OverlayTrigger
               key={otkey}
-              placement="left"
+              placement="bottom"
               overlay={<Tooltip id={ttid}>{fdate}</Tooltip>}
+              popperConfig={{
+                modifiers: { preventOverflow: { enabled: false } }
+              }}
             >
               <div className="transcript" style={textStyle}>
                 {row.transcript}
