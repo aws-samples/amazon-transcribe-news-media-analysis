@@ -52,7 +52,8 @@ export const TASKSTATUS_TOOLTIPS = {
 };
 
 export const TRANSCRIPTION_STATUS = {
-  PAUSED: "The transcription process is paused. Click play to resume",
+  PAUSED:
+    "The video is paused. You may resume consuming the transcription service by clicking play",
   INIT:
-    "The transcription will start when the video will be played. Click play to start"
+    "The transcription will start when the video begins to play. Click play to start"
 };
