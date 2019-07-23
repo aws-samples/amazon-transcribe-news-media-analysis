@@ -17,56 +17,118 @@
 package com.amazonaws.transcriber;
 
 import com.google.common.base.Strings;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class Encoder extends Ffmpeg {
+public class Encoder {
+
     private static final Logger logger = LogManager.getLogger(Encoder.class);
 
     private final String inputFormat;
     private final String input;
-    private final Ffmpeg.LogLevel logLevel;
+    private final String path;
+    private final Pattern printFilter = Pattern.compile("^(?!(\\[info\\] (frame|size)=|\\[https @ 0x[0123456789abcdef]*\\] \\[info\\]|\\[hls,applehttp @ 0x[0123456789abcdef]{12}\\] \\[info\\])).+$");
+    private Process process;
+    private BufferedWriter stdinWriter;
+    private Thread stderrReaderThread;
 
     
-    Encoder(String path, Ffmpeg.LogLevel logLevel, String inputFormat, String input) {
-        super("encoder", path, Pattern.compile("^(?!(\\[info\\] (frame|size)=|\\[https @ 0x[0123456789abcdef]*\\] \\[info\\]|\\[hls,applehttp @ 0x[0123456789abcdef]{12}\\] \\[info\\])).+$"));
+
+    Encoder(String path, String inputFormat, String input) {
+        this.path = path;
         if (Strings.isNullOrEmpty(input)) {
             throw new IllegalArgumentException("input cannot be null or empty");
         }
         this.inputFormat = inputFormat;
         this.input = input;
-        this.logLevel = logLevel;
+    }
+
+    private String convertLogLevel() {
+        String level = logger.getLevel().toString().toLowerCase();
+        switch(level) {
+            case "off":
+                return "quiet";
+            case "warn":
+                return "warning";
+            default:
+                return level;
+        }
     }
     
-    public InputStream start() {
-        Ffmpeg.LogLevel minLogLevel = Ffmpeg.LogLevel.From(Math.max(Ffmpeg.LogLevel.INFO.getValue(), logLevel.getValue()));
-        String minLogLevelString = minLogLevel.toString().toLowerCase();
-        
+    InputStream start() {
         List<String> args = new ArrayList<>(Arrays.asList(
+            path,
             "-hide_banner",
-            "-loglevel", "level+" + minLogLevelString/*,
-            "-re" //realtime */
-        ));
-        if (!Strings.isNullOrEmpty(inputFormat)) {
-            args.addAll(Arrays.asList("-f", inputFormat));
-        }
-
-        args.addAll(Arrays.asList(
+            "-loglevel", "level+" + convertLogLevel(),
             "-i", input,
             "-vn",
             "-ac", "1",
             "-ar", "16000",
             "-c:a", "pcm_s16le",
-            "-f", "s16le",
+            "-f", inputFormat,
             "-" //output to stdout
         ));
-        
-        return super.start(args);
+
+        if (process != null) {
+            throw new IllegalStateException("Already running");
+        }
+
+        logger.info("Starting with %s", args);
+        ProcessBuilder processBuilder = new ProcessBuilder(args);
+
+        try {
+            process = processBuilder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            stderrReaderThread = new Thread(() -> {
+                Thread.currentThread().setName(logger.getName());
+                reader.lines().forEach(line -> {
+                    if (printFilter.matcher(line).matches()) {
+                        logger.info(line);
+                    }
+                });
+                logger.info("Completed");
+            });
+            stderrReaderThread.start();
+            stdinWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+            return process.getInputStream();
+        } catch (IOException e) {
+            logger.error("Error starting", e);
+            return null;
+        }
+    }
+
+    void stop() {
+        if ((process != null) && process.isAlive()) {
+            try {
+                stdinWriter.write("q");
+                stdinWriter.flush();
+                process.wait(1000);
+            } catch (InterruptedException ex) {
+                logger.info("ffmpeg thread for {} has been interrupted.", input);
+            } catch (IOException e) {
+                logger.error("Error quiting ffmpeg process", e);
+            } finally {
+                if ((process != null) && process.isAlive()) {
+                    process.destroy();
+                }
+                if (stderrReaderThread != null) {
+                    stderrReaderThread.interrupt();
+                    stderrReaderThread = null;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void finalize() throws Throwable {
+        stop();
+        super.finalize();
     }
 }
