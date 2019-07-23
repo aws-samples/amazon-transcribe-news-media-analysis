@@ -3,9 +3,15 @@ import { Alert, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 import { formatDate, scrollToDiv, sortByKey } from "../utils";
 import { TRANSCRIPTION_STATUS } from "../utils/strings";
-import { POLL_INTERVAL } from "../utils/timers";
+import { POLL_INITIAL_FETCH_PASTTIME, POLL_INTERVAL } from "../utils/timers";
 
-export default ({ getCurrentTimestamp, mediaUrl, paused, poll, showError }) => {
+export default ({
+  getCurrentTimestamp,
+  mediaUrl,
+  poll,
+  showError,
+  videoStatus
+}) => {
   const textDiv = useRef(undefined);
 
   const [watermark, setWatermark] = useState(undefined);
@@ -18,15 +24,17 @@ export default ({ getCurrentTimestamp, mediaUrl, paused, poll, showError }) => {
     []
   );
 
+  const isPlaying = videoStatus === "PLAYING";
+
   useEffect(() => {
     let timer;
 
     const fetchSubtitles = () => {
-      if (paused) return;
+      if (!isPlaying) return;
 
       return poll(mediaUrl, watermark, getCurrentTimestamp())
         .then(r => {
-          if (paused) return;
+          if (!isPlaying) return;
 
           const serialized = sortByKey(r.fragments, "timestamp");
           const fullFragments = serialized.filter(el => !el.isPartial);
@@ -45,24 +53,23 @@ export default ({ getCurrentTimestamp, mediaUrl, paused, poll, showError }) => {
         .catch(e => showError(true));
     };
 
-    if (!watermark) setWatermark(getCurrentTimestamp());
+    if (!watermark)
+      setWatermark(getCurrentTimestamp() - POLL_INITIAL_FETCH_PASTTIME);
     else fetchSubtitles();
 
     return () => clearTimeout(timer);
-  }, [getCurrentTimestamp, paused, poll, showError, mediaUrl, watermark]);
+  }, [getCurrentTimestamp, isPlaying, mediaUrl, poll, showError, watermark]);
 
   useEffect(() => {
     scrollToDiv(textDiv.current);
   });
 
-  const transcriptionMaxHeight = 480 - (paused ? 88 : 0);
+  const transcriptionMaxHeight = 480 - (!isPlaying ? 88 : 0);
 
   return (
     <>
-      {paused && (
-        <Alert variant="warning">
-          {TRANSCRIPTION_STATUS[watermark ? "PAUSED" : "STARTING"]}
-        </Alert>
+      {!isPlaying && (
+        <Alert variant="warning">{TRANSCRIPTION_STATUS[videoStatus]}</Alert>
       )}
       <div
         style={{
@@ -72,24 +79,30 @@ export default ({ getCurrentTimestamp, mediaUrl, paused, poll, showError }) => {
         }}
         ref={x => (textDiv.current = x)}
       >
-        {transcript.map((row, index) => (
-          <OverlayTrigger
-            key={`ot-t-${index}`}
-            placement="left"
-            overlay={
-              <Tooltip id={`tooltip-t-${index}`}>
-                {formatDate(row.timestamp)}
-              </Tooltip>
-            }
-          >
-            <div
-              className={row.isPartial ? "partial transcript" : "transcript"}
+        {transcript.map((row, index) => {
+          const fdate = formatDate(row.timestamp);
+          const isFirst = index === 0;
+          const isLast = index === transcript.length - 1;
+          const otkey = `ot-t-${index}`;
+          const ttid = `tooltip-t-${index}`;
+          const textStyle = {};
+
+          if (row.isPartial) textStyle.fontStyle = "italic";
+          if (!isFirst && isLast) textStyle.marginTop = "20px";
+
+          return (
+            <OverlayTrigger
+              key={otkey}
+              placement="left"
+              overlay={<Tooltip id={ttid}>{fdate}</Tooltip>}
             >
-              {row.transcript}
-              {row.isPartial && "..."}
-            </div>
-          </OverlayTrigger>
-        ))}
+              <div className="transcript" style={textStyle}>
+                {row.transcript}
+                {row.isPartial && "..."}
+              </div>
+            </OverlayTrigger>
+          );
+        })}
       </div>
     </>
   );
