@@ -7,7 +7,9 @@ import { POLL_INTERVAL } from "../utils/timers";
 
 export default ({ getCurrentTimestamp, mediaUrl, paused, poll, showError }) => {
   const textDiv = useRef(undefined);
+
   const [watermark, setWatermark] = useState(undefined);
+  
   const [transcript, addTranscriptions] = useReducer(
     (transcriptions, newTranscriptions) => {
       const withoutPartials = transcriptions.filter(el => !el.isPartial);

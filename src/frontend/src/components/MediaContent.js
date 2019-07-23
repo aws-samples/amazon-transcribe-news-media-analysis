@@ -3,13 +3,13 @@ import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import videojs from "video.js";
 import "videojs-youtube";
 
+import { getUTCTimestamp, renderWithLineBreaks } from "../utils";
 import getPlayerSettings from "../utils/getPlayerSettings";
 import { TASKSTATUS_MESSAGE } from "../utils/strings";
 import { FETCH_TASKSTATUS_RETRY } from "../utils/timers";
 
 import ErrorAlert from "./ErrorAlert";
 import Transcript from "./Transcript";
-import { getUTCTimestamp, renderWithLineBreaks } from "../utils";
 
 export default ({ getTask, poll, mediaUrl }) => {
   const [errorShown, showError] = useState(false);
@@ -59,12 +59,9 @@ export default ({ getTask, poll, mediaUrl }) => {
   useEffect(() => {
     if (videoShown && !player.current) {
       const element = videoNode.current;
-      setTimeout(() => {
-        player.current = videojs(element, playerSettings);
-        player.current.on("ready", () => player.current.play());
-        player.current.on("playing", () => setPaused(false));
-        player.current.on("pause", () => setPaused(true));
-      }, 1000);
+      player.current = videojs(element, playerSettings);
+      player.current.on("playing", () => setPaused(false));
+      player.current.on("pause", () => setPaused(true));
     }
   }, [playerSettings, videoShown]);
 
