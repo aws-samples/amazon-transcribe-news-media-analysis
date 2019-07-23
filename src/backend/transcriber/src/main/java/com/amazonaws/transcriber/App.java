@@ -50,7 +50,7 @@ public class App {
 
         Transcriber transcriber = new Transcriber(input, LanguageCode.EN_US, MediaEncoding.PCM,
             config.mediaSampleRate(), "");
-        Encoder encoder = new Encoder(config.ffmpegPath(), Ffmpeg.LogLevel.WARNING, "", input);
+        Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
 
         InputStream mediaStream = encoder.start();
         try {
