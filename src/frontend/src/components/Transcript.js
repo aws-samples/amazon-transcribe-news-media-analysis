@@ -53,7 +53,8 @@ export default ({
         .catch(e => showError(true));
     };
 
-    if (!watermark)
+    if (!isPlaying) return;
+    else if (!watermark)
       setWatermark(getCurrentTimestamp() - POLL_INITIAL_FETCH_PASTTIME);
     else fetchSubtitles();
 
