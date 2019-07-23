@@ -38,3 +38,8 @@ body {
 .transcript.partial {
   font-style: italic;
 }
+
+.video-js .vjs-big-play-button {
+  top: 44%;
+  left: 44%;
+}
