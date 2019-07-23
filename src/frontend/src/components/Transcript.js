@@ -9,7 +9,7 @@ export default ({ getCurrentTimestamp, mediaUrl, paused, poll, showError }) => {
   const textDiv = useRef(undefined);
 
   const [watermark, setWatermark] = useState(undefined);
-  
+
   const [transcript, addTranscriptions] = useReducer(
     (transcriptions, newTranscriptions) => {
       const withoutPartials = transcriptions.filter(el => !el.isPartial);
@@ -36,7 +36,10 @@ export default ({ getCurrentTimestamp, mediaUrl, paused, poll, showError }) => {
             const lastTimestamp =
               fullFragments[fullFragments.length - 1].timestamp;
 
-            setTimeout(() => setWatermark(lastTimestamp + 1), POLL_INTERVAL);
+            timer = setTimeout(
+              () => setWatermark(lastTimestamp + 1),
+              POLL_INTERVAL
+            );
           } else timer = setTimeout(fetchSubtitles, POLL_INTERVAL);
         })
         .catch(e => showError(true));
