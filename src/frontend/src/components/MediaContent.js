@@ -17,8 +17,8 @@ export default ({ getTask, poll, mediaUrl }) => {
     mediaUrl,
     taskStatus: "LOADING"
   });
-  const [paused, setPaused] = useState(true);
   const [videoShown, showVideo] = useState(false);
+  const [videoStatus, setVideoStatus] = useState("INIT");
 
   const player = useRef(undefined);
   const startedPlayingDate = useRef(undefined);
@@ -27,7 +27,11 @@ export default ({ getTask, poll, mediaUrl }) => {
   const playerSettings = getPlayerSettings(mediaUrl);
 
   const getCurrentTimestamp = () => {
-    if (!player.current) return undefined;
+    if (
+      !player.current ||
+      (!startedPlayingDate.current && videoStatus === "INIT")
+    )
+      return undefined;
 
     const currentMs = Math.round(player.current.currentTime() * 1000);
     if (!startedPlayingDate.current)
@@ -60,8 +64,8 @@ export default ({ getTask, poll, mediaUrl }) => {
     if (videoShown && !player.current) {
       const element = videoNode.current;
       player.current = videojs(element, playerSettings);
-      player.current.on("playing", () => setPaused(false));
-      player.current.on("pause", () => setPaused(true));
+      player.current.on("playing", () => setVideoStatus("PLAYING"));
+      player.current.on("pause", () => setVideoStatus("PAUSED"));
     }
   }, [playerSettings, videoShown]);
 
@@ -118,9 +122,9 @@ export default ({ getTask, poll, mediaUrl }) => {
               <Transcript
                 getCurrentTimestamp={getCurrentTimestamp}
                 mediaUrl={mediaUrl}
-                paused={paused}
                 poll={poll}
                 showError={showError}
+                videoStatus={videoStatus}
               />
             )}
             {mediaDetails.taskStatus === "ERROR" && (
