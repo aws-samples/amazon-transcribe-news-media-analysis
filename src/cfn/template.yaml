@@ -12,6 +12,7 @@ Globals:
         MAX_TASKS: !Ref MaxTasksCapacity
         REGION: !Ref AWS::Region
         TO_BUCKET: !Ref WebUIBucket
+        VPC_ID: !Ref VPC
   Api:
     Cors:
       AllowMethods: "'*'"
@@ -27,6 +28,34 @@ Outputs:
   url:
     Value: !Sub https://${WebUIBucket}.s3.amazonaws.com/index.html
     Description: WebUI URL
+
+Mappings:
+  Regions:
+    ap-south-1:
+      HasThreeAZs: true
+    eu-west-2:
+      HasThreeAZs: true
+    eu-west-1:
+      HasThreeAZs: true
+    ap-northeast-2:
+      HasThreeAZs: true
+    ca-central-1:
+      HasThreeAZs: false
+    ap-southeast-1:
+      HasThreeAZs: true
+    ap-southeast-2:
+      HasThreeAZs: true
+    eu-central-1:
+      HasThreeAZs: true
+    us-east-1:
+      HasThreeAZs: true
+    us-east-2:
+      HasThreeAZs: true
+    us-west-2:
+      HasThreeAZs: true
+
+Conditions:
+  HasThreeAZs: !Equals [ !FindInMap [ Regions, !Ref "AWS::Region", HasThreeAZs ], true ]
 
 Resources:
   ApiGatewayInvokeRole:
@@ -111,6 +140,41 @@ Resources:
             Action:
               - sts:AssumeRole
 
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
+      VpcId: !Ref VPC
+
+  EIPfor1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  EIPfor2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  EIPfor3:
+    Type: AWS::EC2::EIP
+    Condition: HasThreeAZs
+    Properties:
+      Domain: vpc
+
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
   LambdaSetup:
     Type: AWS::Serverless::Function
     Properties:
@@ -122,6 +186,252 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Role: !GetAtt CustomResourceRole.Arn
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !Sub ${EIPfor1.AllocationId}
+      SubnetId: !Ref PublicSubnet1
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !Sub ${EIPfor2.AllocationId}
+      SubnetId: !Ref PublicSubnet2
+
+  NatGateway3:
+    Type: AWS::EC2::NatGateway
+    Condition: HasThreeAZs
+    Properties:
+      AllocationId: !Sub ${EIPfor3.AllocationId}
+      SubnetId: !Ref PublicSubnet3
+
+  PrivateNetworkAcl:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateNetworkAclEntryInAllowVPC:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkAcl
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: False
+      CidrBlock: 0.0.0.0/0
+
+  PrivateNetworkAclEntryOutAllowVPC:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkAcl
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: 0.0.0.0/0
+
+  PrivateRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: NatGateway1
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: NatGateway2
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateRoute3:
+    Type: AWS::EC2::Route
+    Condition: HasThreeAZs
+    DependsOn: NatGateway3
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable3
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway3
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Condition: HasThreeAZs
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+
+  PrivateRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: HasThreeAZs
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable3
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.0.0/22
+      AvailabilityZone: !Select [0, !GetAZs '']
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.4.0/22
+      AvailabilityZone: !Select [1, !GetAZs '']
+
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Condition: HasThreeAZs
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.8.0/22
+      AvailabilityZone: !Select [2, !GetAZs '']
+
+  PrivateSubnetNetworkAclAssociation1:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      NetworkAclId: !Ref PrivateNetworkAcl
+
+  PrivateSubnetNetworkAclAssociation2:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      NetworkAclId: !Ref PrivateNetworkAcl
+
+  PrivateSubnetNetworkAclAssociation3:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Condition: HasThreeAZs
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      NetworkAclId: !Ref PrivateNetworkAcl
+
+  PublicNetworkAcl:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VPC
+      
+  PublicNetworkAclEntryInAllowAll:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref PublicNetworkAcl
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: False
+      CidrBlock: 0.0.0.0/0
+
+  PublicNetworkAclEntryOutAllowAll:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref PublicNetworkAcl
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: 0.0.0.0/0
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: HasThreeAZs
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.12.0/22
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.16.0/22
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Condition: HasThreeAZs
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.20.0/22
+      AvailabilityZone: !Select [2, !GetAZs '']
+      MapPublicIpOnLaunch: true
+
+  PublicSubnetNetworkAclAssociation1:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      NetworkAclId: !Ref PublicNetworkAcl
+
+  PublicSubnetNetworkAclAssociation2:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      NetworkAclId: !Ref PublicNetworkAcl
+
+  PublicSubnetNetworkAclAssociation3:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Condition: HasThreeAZs
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      NetworkAclId: !Ref PublicNetworkAcl
 
   RestApi:
     Type: AWS::Serverless::Api
@@ -469,6 +779,11 @@ Resources:
     Properties:
       ServiceToken: !GetAtt LambdaSetup.Arn
       Region: !Ref AWS::Region
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
 
   WebUIBucket:
     Type: AWS::S3::Bucket

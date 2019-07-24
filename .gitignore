@@ -15,6 +15,7 @@ src/frontend/dist
 src/frontend/public/settings.js
 
 package-lock.json
+taskcat_outputs
 templates
 yarn.lock
 .idea

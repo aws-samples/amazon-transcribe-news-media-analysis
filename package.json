@@ -11,6 +11,7 @@
     "lambda-build": "cd src/backend/functions/setup && npm run build",
     "lambda-inline": "cd src/backend/functions/setup && npm run inline",
     "postinstall": "cd src/frontend && npm i && cd ../backend/functions/setup && npm i",
+    "pre-deploy-test": "taskcat -c ci/taskcat.yml --verbose --exclude src --exclude docs --exclude taskcat_outputs",
     "start": "cd src/frontend && npm start",
     "test": "cd src/frontend && npm t",
     "webui-build": "cd src/frontend && npm run build",
