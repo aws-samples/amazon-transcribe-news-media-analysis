@@ -58,6 +58,14 @@ Conditions:
   HasThreeAZs: !Equals [ !FindInMap [ Regions, !Ref "AWS::Region", HasThreeAZs ], true ]
 
 Resources:
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: 10.0.0.0/16
+
   ApiGatewayInvokeRole:
     Type: AWS::IAM::Role
     Properties:
@@ -776,11 +784,6 @@ Resources:
     Properties:
       ServiceToken: !GetAtt LambdaSetup.Arn
       Region: !Ref AWS::Region
-
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
 
   WebUIBucket:
     Type: AWS::S3::Bucket
