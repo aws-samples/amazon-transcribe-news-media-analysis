@@ -31,21 +31,21 @@ Outputs:
 
 Mappings:
   Regions:
-    ap-south-1:
-      HasThreeAZs: true
-    eu-west-2:
-      HasThreeAZs: true
-    eu-west-1:
-      HasThreeAZs: true
     ap-northeast-2:
       HasThreeAZs: true
-    ca-central-1:
-      HasThreeAZs: false
+    ap-south-1:
+      HasThreeAZs: true
     ap-southeast-1:
       HasThreeAZs: true
     ap-southeast-2:
       HasThreeAZs: true
+    ca-central-1:
+      HasThreeAZs: false
     eu-central-1:
+      HasThreeAZs: true
+    eu-west-1:
+      HasThreeAZs: true
+    eu-west-2:
       HasThreeAZs: true
     us-east-1:
       HasThreeAZs: true
