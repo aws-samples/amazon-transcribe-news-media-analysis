@@ -1,7 +1,5 @@
 FROM amazoncorretto:8
 
-LABEL maintainer="leeatk@amazon.co.uk"
-
 RUN yum install -y wget xz tar
 
 RUN wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
