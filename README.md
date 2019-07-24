@@ -2,6 +2,8 @@
 
 Transcribe news audio in realtime.
 
+> Warning: This project is currently being developed and none of the code should be used in production.
+
 ### Transcriber
 
 To run the Transciber as a standalone application run the following shell commands:
