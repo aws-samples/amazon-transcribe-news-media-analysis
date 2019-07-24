@@ -16,6 +16,7 @@ public class TranscriberConfig {
     private String ffmpegPath = parseEnvVar("FFMPEG_EXE", "/ffmpeg/ffmpeg");
     private String youtubeDlPath = parseEnvVar("YOUTUBE_DL_EXE", "/usr/local/bin/youtube-dl");
     private int mediaSampleRate = parseEnvVar("MEDIA_SAMPLE_RATE", 16000);
+    private boolean persistLifecycleInfo = parseEnvVar("PERSIST_LIFECYCLE_INFO", true);
     private String transcriptsDynamoDbTable = requiredEnvVar("TRANSCRIPTS_DYNAMO_DB_TABLE");
     private String tasksDynamoDbTable = requiredEnvVar("TASKS_DYNAMO_DB_TABLE");
     private String mediaUrl = requiredEnvVar("MEDIA_URL");
@@ -35,6 +36,10 @@ public class TranscriberConfig {
 
     private int parseEnvVar(String name, int defVal) {
         return parseEnvVar(Integer::parseInt, name, defVal);
+    }
+
+    private boolean parseEnvVar(String name, boolean defVal) {
+        return parseEnvVar(Boolean::parseBoolean, name, defVal);
     }
 
     private String parseEnvVar(String name, String defVal) {
