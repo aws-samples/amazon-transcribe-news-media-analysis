@@ -2,7 +2,7 @@
 
 Transcribe news audio in realtime.
 
-> Warning: This project is currently being developed and none of the code should be used in production.
+> Warning: This project is currently being developed and the code shouldn't be used in production.
 
 ### Transcriber
 
