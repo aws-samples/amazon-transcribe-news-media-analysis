@@ -17,20 +17,15 @@
 package com.amazonaws.transcriber;
 
 import com.amazonaws.transcribestreaming.retryclient.StreamTranscriptionBehavior;
-import com.amazonaws.utils;
 import com.google.common.base.Strings;
-import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.transcribestreaming.model.*;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.EnumSet;
 
 import static com.google.common.base.Predicates.not;
 
@@ -51,7 +46,7 @@ public class ResponseHandler implements StreamTranscriptionBehavior {
 
     public ResponseHandler(String mediaUrl) {
         this.debounceTime = System.currentTimeMillis();
-        this.writer = new TranscribedSegmentWriter(DynamoDbClient.create(), config.transcriptsDynamoDbTable(), mediaUrl);
+        this.writer = new TranscribedSegmentWriter(DynamoDbManager.getClient(), config.transcriptsDynamoDbTable(), mediaUrl);
     }
 
     @Override
