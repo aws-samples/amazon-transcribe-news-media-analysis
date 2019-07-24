@@ -233,7 +233,6 @@ Resources:
 
   PrivateRoute1:
     Type: AWS::EC2::Route
-    DependsOn: NatGateway1
     Properties:
       RouteTableId: !Ref PrivateRouteTable1
       DestinationCidrBlock: 0.0.0.0/0
@@ -241,7 +240,6 @@ Resources:
 
   PrivateRoute2:
     Type: AWS::EC2::Route
-    DependsOn: NatGateway2
     Properties:
       RouteTableId: !Ref PrivateRouteTable2
       DestinationCidrBlock: 0.0.0.0/0
@@ -250,7 +248,6 @@ Resources:
   PrivateRoute3:
     Type: AWS::EC2::Route
     Condition: HasThreeAZs
-    DependsOn: NatGateway3
     Properties:
       RouteTableId: !Ref PrivateRouteTable3
       DestinationCidrBlock: 0.0.0.0/0
