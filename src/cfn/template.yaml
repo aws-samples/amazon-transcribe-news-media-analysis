@@ -20,9 +20,27 @@ Globals:
       AllowOrigin: "'*'"
 
 Parameters:
+
   MaxTasksCapacity:
+    Description: The maximum number of Fargate Tasks to be allocated
     Type: Number
     Default: 10
+
+  PrivateSubnetIpBlocks:
+    Description: Comma-delimited list of CIDR blocks for the private subnets
+    Type: CommaDelimitedList
+    Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
+
+  PublicSubnetIpBlocks:
+    Description: Comma-delimited list of CIDR blocks for the public subnets
+    Type: CommaDelimitedList
+    Default: "10.0.12.0/22, 10.0.16.0/22, 10.0.20.0/22"
+
+  VpcIpBlock:
+    Description: CIDR block for the VPC
+    Type: String
+    Default: 10.0.0.0/16
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
 
 Outputs:
   url:
@@ -64,7 +82,7 @@ Resources:
     Properties:
       EnableDnsSupport: true
       EnableDnsHostnames: true
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcIpBlock
 
   ApiGatewayInvokeRole:
     Type: AWS::IAM::Role
@@ -226,7 +244,7 @@ Resources:
       RuleNumber: 99
       Protocol: -1
       RuleAction: allow
-      Egress: False
+      Egress: false
       CidrBlock: 0.0.0.0/0
 
   PrivateNetworkAclEntryOutAllowVPC:
@@ -300,23 +318,23 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.0.0/22
-      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Select [ 0, !Ref PrivateSubnetIpBlocks ]
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.4.0/22
-      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Select [ 1, !Ref PrivateSubnetIpBlocks ]
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
 
   PrivateSubnet3:
     Type: AWS::EC2::Subnet
     Condition: HasThreeAZs
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.8.0/22
-      AvailabilityZone: !Select [2, !GetAZs '']
+      CidrBlock: !Select [ 2, !Ref PrivateSubnetIpBlocks ]
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
 
   PrivateSubnetNetworkAclAssociation1:
     Type: AWS::EC2::SubnetNetworkAclAssociation
@@ -349,7 +367,7 @@ Resources:
       RuleNumber: 99
       Protocol: -1
       RuleAction: allow
-      Egress: False
+      Egress: false
       CidrBlock: 0.0.0.0/0
 
   PublicNetworkAclEntryOutAllowAll:
@@ -398,16 +416,16 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.12.0/22
-      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Select [ 0, !Ref PublicSubnetIpBlocks ]
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
       MapPublicIpOnLaunch: true
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.16.0/22
-      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Select [ 1, !Ref PublicSubnetIpBlocks ]
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
       MapPublicIpOnLaunch: true
 
   PublicSubnet3:
@@ -415,8 +433,8 @@ Resources:
     Condition: HasThreeAZs
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.20.0/22
-      AvailabilityZone: !Select [2, !GetAZs '']
+      CidrBlock: !Select [ 2, !Ref PublicSubnetIpBlocks ]
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
       MapPublicIpOnLaunch: true
 
   PublicSubnetNetworkAclAssociation1:
@@ -730,6 +748,22 @@ Resources:
             in: header
             x-amazon-apigateway-authtype: awsSigv4
 
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: !Ref VPC
+
+  SetupWebUI:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt LambdaSetup.Arn
+      Region: !Ref AWS::Region
+
   TasksDynamoTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -778,12 +812,6 @@ Resources:
               KeyType: RANGE
           Projection: 
             ProjectionType: ALL
-
-  SetupWebUI:
-    Type: Custom::Setup
-    Properties:
-      ServiceToken: !GetAtt LambdaSetup.Arn
-      Region: !Ref AWS::Region
 
   WebUIBucket:
     Type: AWS::S3::Bucket

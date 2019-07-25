@@ -1,4 +1,18 @@
-[{
-  "ParameterKey": "MaxTasksCapacity",
-  "ParameterValue": 10
-}]
+[
+  {
+    "ParameterKey": "MaxTasksCapacity",
+    "ParameterValue": 10
+  },
+  {
+    "ParameterKey": "PrivateSubnetIpBlocks",
+    "ParameterValue": "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
+  },
+  {
+    "ParameterKey": "PublicSubnetIpBlocks",
+    "ParameterValue": "10.0.12.0/22, 10.0.16.0/22, 10.0.20.0/22"
+  },
+  {
+    "ParameterKey": "VpcIpBlock",
+    "ParameterValue": "10.0.0.0/16"
+  }
+]

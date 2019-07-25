@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "npm run lambda-build && npm run cfn-build",
+    "build": "npm run webui-build && npm run lambda-build && npm run cfn-build",
     "cfn-build": "npm run cfn-package && npm run lambda-inline",
     "cfn-ensure-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
     "cfn-package": "npm run cfn-ensure-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml",
