@@ -1,94 +1,41 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Description: Amazon Transcribe News Media Analysis (uksb-1potrt4cg)
-Transform: AWS::Serverless-2016-10-31
-
+Transform: 'AWS::Serverless-2016-10-31'
 Globals:
   Function:
     Environment:
       Variables:
-        API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
-        COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
+        API_GATEWAY:
+          'Fn::Sub': 'https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD'
+        COGNITO_IDENTITY_POOL:
+          Ref: CognitoIdentityPool
         FROM_BUCKET: media-analysis-demo
-        MAX_TASKS: !Ref MaxTasksCapacity
-        REGION: !Ref AWS::Region
-        TO_BUCKET: !Ref WebUIBucket
-        VPC_ID: !Ref VPC
+        MAX_TASKS:
+          Ref: MaxTasksCapacity
+        REGION:
+          Ref: 'AWS::Region'
+        TO_BUCKET:
+          Ref: WebUIBucket
   Api:
     Cors:
-      AllowMethods: "'*'"
-      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-      AllowOrigin: "'*'"
-
+      AllowMethods: '''*'''
+      AllowHeaders: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+      AllowOrigin: '''*'''
 Parameters:
-
   MaxTasksCapacity:
-    Description: The maximum number of Fargate Tasks to be allocated
     Type: Number
     Default: 10
-
-  PrivateSubnetIpBlocks:
-    Description: Comma-delimited list of CIDR blocks for the private subnets
-    Type: CommaDelimitedList
-    Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
-
-  PublicSubnetIpBlocks:
-    Description: Comma-delimited list of CIDR blocks for the public subnets
-    Type: CommaDelimitedList
-    Default: "10.0.12.0/22, 10.0.16.0/22, 10.0.20.0/22"
-
-  VpcIpBlock:
-    Description: CIDR block for the VPC
-    Type: String
-    Default: 10.0.0.0/16
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-
 Outputs:
   url:
-    Value: !Sub https://${WebUIBucket}.s3.amazonaws.com/index.html
+    Value:
+      'Fn::Sub': 'https://${WebUIBucket}.s3.amazonaws.com/index.html'
     Description: WebUI URL
-
-Mappings:
-  Regions:
-    ap-northeast-2:
-      HasThreeAZs: true
-    ap-south-1:
-      HasThreeAZs: true
-    ap-southeast-1:
-      HasThreeAZs: true
-    ap-southeast-2:
-      HasThreeAZs: true
-    ca-central-1:
-      HasThreeAZs: false
-    eu-central-1:
-      HasThreeAZs: true
-    eu-west-1:
-      HasThreeAZs: true
-    eu-west-2:
-      HasThreeAZs: true
-    us-east-1:
-      HasThreeAZs: true
-    us-east-2:
-      HasThreeAZs: true
-    us-west-2:
-      HasThreeAZs: true
-
-Conditions:
-  HasThreeAZs: !Equals [ !FindInMap [ Regions, !Ref "AWS::Region", HasThreeAZs ], true ]
-
 Resources:
-
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      CidrBlock: !Ref VpcIpBlock
-
   ApiGatewayInvokeRole:
-    Type: AWS::IAM::Role
+    Type: 'AWS::IAM::Role'
     Properties:
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
+        - 'arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -96,10 +43,9 @@ Resources:
               Federated:
                 - cognito-identity.amazonaws.com
             Action:
-              - sts:AssumeRoleWithWebIdentity
-
+              - 'sts:AssumeRoleWithWebIdentity'
   CustomResourceRole:
-    Type: AWS::IAM::Role
+    Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -108,41 +54,45 @@ Resources:
               Service:
                 - lambda.amazonaws.com
             Action:
-              - sts:AssumeRole
+              - 'sts:AssumeRole'
       Path: /
       Policies:
         - PolicyName: MediaAnalysis-setup-S3-fc
           PolicyDocument:
             Statement:
-            - Effect: Allow
-              Action: 's3:*'
-              Resource: '*'
+              - Effect: Allow
+                Action: 's3:*'
+                Resource: '*'
         - PolicyName: MediaAnalysis-cloudwatch-logs
           PolicyDocument:
             Statement:
-            - Effect: Allow
-              Action: 'logs:*'
-              Resource: 'arn:aws:logs:*:*:*'
-
+              - Effect: Allow
+                Action: 'logs:*'
+                Resource: 'arn:aws:logs:*:*:*'
   CognitoIdentityPool:
-    Type: AWS::Cognito::IdentityPool
+    Type: 'AWS::Cognito::IdentityPool'
     Properties:
       IdentityPoolName: MediaAnalysisIdentityPool
       AllowUnauthenticatedIdentities: true
-
   CognitoIdentityPoolRole:
-    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Type: 'AWS::Cognito::IdentityPoolRoleAttachment'
     Properties:
-      IdentityPoolId: !Ref CognitoIdentityPool
+      IdentityPoolId:
+        Ref: CognitoIdentityPool
       Roles:
-        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
-        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
-
+        authenticated:
+          'Fn::GetAtt':
+            - ApiGatewayInvokeRole
+            - Arn
+        unauthenticated:
+          'Fn::GetAtt':
+            - ApiGatewayInvokeRole
+            - Arn
   DbReadRole:
-    Type: AWS::IAM::Role
+    Type: 'AWS::IAM::Role'
     Properties:
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
+        - 'arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -150,13 +100,12 @@ Resources:
               Service:
                 - apigateway.amazonaws.com
             Action:
-              - sts:AssumeRole
-
+              - 'sts:AssumeRole'
   DbWriteRole:
-    Type: AWS::IAM::Role
+    Type: 'AWS::IAM::Role'
     Properties:
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -164,308 +113,66 @@ Resources:
               Service:
                 - apigateway.amazonaws.com
             Action:
-              - sts:AssumeRole
-
-  DynamoDBEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      RouteTableIds:
-        - !Ref PrivateRouteTable1
-        - !Ref PrivateRouteTable2
-        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
-      VpcId: !Ref VPC
-
-  EIPfor1:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-
-  EIPfor2:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-
-  EIPfor3:
-    Type: AWS::EC2::EIP
-    Condition: HasThreeAZs
-    Properties:
-      Domain: vpc
-
-  GatewayToInternet:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
-
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-
+              - 'sts:AssumeRole'
   LambdaSetup:
-    Type: AWS::Serverless::Function
+    Type: 'AWS::Serverless::Function'
     Properties:
       FunctionName: MediaAnalysisSetup
       Runtime: nodejs8.10
       Handler: index.handler
-      CodeUri: ../backend/functions/setup/
       Description: Custom Lambda resource for the Media Analysis Cloudformation Stack
       MemorySize: 128
       Timeout: 30
-      Role: !GetAtt CustomResourceRole.Arn
-
-  NatGateway1:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !Sub ${EIPfor1.AllocationId}
-      SubnetId: !Ref PublicSubnet1
-
-  NatGateway2:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !Sub ${EIPfor2.AllocationId}
-      SubnetId: !Ref PublicSubnet2
-
-  NatGateway3:
-    Type: AWS::EC2::NatGateway
-    Condition: HasThreeAZs
-    Properties:
-      AllocationId: !Sub ${EIPfor3.AllocationId}
-      SubnetId: !Ref PublicSubnet3
-
-  PrivateNetworkAcl:
-    Type: AWS::EC2::NetworkAcl
-    Properties:
-      VpcId: !Ref VPC
-
-  PrivateNetworkAclEntryInAllowVPC:
-    Type: AWS::EC2::NetworkAclEntry
-    Properties:
-      NetworkAclId: !Ref PrivateNetworkAcl
-      RuleNumber: 99
-      Protocol: -1
-      RuleAction: allow
-      Egress: false
-      CidrBlock: 0.0.0.0/0
-
-  PrivateNetworkAclEntryOutAllowVPC:
-    Type: AWS::EC2::NetworkAclEntry
-    Properties:
-      NetworkAclId: !Ref PrivateNetworkAcl
-      RuleNumber: 99
-      Protocol: -1
-      RuleAction: allow
-      Egress: true
-      CidrBlock: 0.0.0.0/0
-
-  PrivateRoute1:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable1
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway1
-
-  PrivateRoute2:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable2
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway2
-
-  PrivateRoute3:
-    Type: AWS::EC2::Route
-    Condition: HasThreeAZs
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable3
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway3
-
-  PrivateRouteTable1:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-  
-  PrivateRouteTable2:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-
-  PrivateRouteTable3:
-    Type: AWS::EC2::RouteTable
-    Condition: HasThreeAZs
-    Properties:
-      VpcId: !Ref VPC
-
-  PrivateRouteTableAssociation1:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet1
-      RouteTableId: !Ref PrivateRouteTable1
-
-  PrivateRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet2
-      RouteTableId: !Ref PrivateRouteTable2
-
-  PrivateRouteTableAssociation3:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: HasThreeAZs
-    Properties:
-      SubnetId: !Ref PrivateSubnet3
-      RouteTableId: !Ref PrivateRouteTable3
-
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [ 0, !Ref PrivateSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
-
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [ 1, !Ref PrivateSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
-
-  PrivateSubnet3:
-    Type: AWS::EC2::Subnet
-    Condition: HasThreeAZs
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [ 2, !Ref PrivateSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 2, !GetAZs '' ]
-
-  PrivateSubnetNetworkAclAssociation1:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet1
-      NetworkAclId: !Ref PrivateNetworkAcl
-
-  PrivateSubnetNetworkAclAssociation2:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet2
-      NetworkAclId: !Ref PrivateNetworkAcl
-
-  PrivateSubnetNetworkAclAssociation3:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Condition: HasThreeAZs
-    Properties:
-      SubnetId: !Ref PrivateSubnet3
-      NetworkAclId: !Ref PrivateNetworkAcl
-
-  PublicNetworkAcl:
-    Type: AWS::EC2::NetworkAcl
-    Properties:
-      VpcId: !Ref VPC
-      
-  PublicNetworkAclEntryInAllowAll:
-    Type: AWS::EC2::NetworkAclEntry
-    Properties:
-      NetworkAclId: !Ref PublicNetworkAcl
-      RuleNumber: 99
-      Protocol: -1
-      RuleAction: allow
-      Egress: false
-      CidrBlock: 0.0.0.0/0
-
-  PublicNetworkAclEntryOutAllowAll:
-    Type: AWS::EC2::NetworkAclEntry
-    Properties:
-      NetworkAclId: !Ref PublicNetworkAcl
-      RuleNumber: 99
-      Protocol: -1
-      RuleAction: allow
-      Egress: true
-      CidrBlock: 0.0.0.0/0
-
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: GatewayToInternet
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  PublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-
-  PublicRouteTableAssociation1:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet1
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicRouteTableAssociation3:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: HasThreeAZs
-    Properties:
-      SubnetId: !Ref PublicSubnet3
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [ 0, !Ref PublicSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
-      MapPublicIpOnLaunch: true
-
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [ 1, !Ref PublicSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
-      MapPublicIpOnLaunch: true
-
-  PublicSubnet3:
-    Type: AWS::EC2::Subnet
-    Condition: HasThreeAZs
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [ 2, !Ref PublicSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 2, !GetAZs '' ]
-      MapPublicIpOnLaunch: true
-
-  PublicSubnetNetworkAclAssociation1:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet1
-      NetworkAclId: !Ref PublicNetworkAcl
-
-  PublicSubnetNetworkAclAssociation2:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      NetworkAclId: !Ref PublicNetworkAcl
-
-  PublicSubnetNetworkAclAssociation3:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Condition: HasThreeAZs
-    Properties:
-      SubnetId: !Ref PublicSubnet3
-      NetworkAclId: !Ref PublicNetworkAcl
-
+      Role:
+        'Fn::GetAtt':
+          - CustomResourceRole
+          - Arn
+      InlineCode: >-
+        module.exports=function(e){var t={};function o(n){if(t[n])return
+        t[n].exports;var r=t[n]={i:n,l:!1,exports:{}};return
+        e[n].call(r.exports,r,r.exports,o),r.l=!0,r.exports}return
+        o.m=e,o.c=t,o.d=function(e,t,n){o.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:n})},o.r=function(e){"undefined"!=typeof
+        Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},o.t=function(e,t){if(1&t&&(e=o(e)),8&t)return
+        e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var
+        n=Object.create(null);if(o.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof
+        e)for(var r in e)o.d(n,r,function(t){return e[t]}.bind(null,r));return
+        n},o.n=function(e){var t=e&&e.__esModule?function(){return
+        e.default}:function(){return e};return
+        o.d(t,"a",t),t},o.o=function(e,t){return
+        Object.prototype.hasOwnProperty.call(e,t)},o.p="",o(o.s=0)}([function(e,t,o){e.exports=o(1)},function(e,t,o){const
+        n=o(2),r=o(3),s=o(6);t.handler=((e,t,o)=>{const{copyFiles:c,removeFiles:i,writeSettings:u}=s(new
+        n.S3),{sendResponse:l}=r(e,t,o),a=e.RequestType;let
+        d;"Delete"===a?(console.log("Deleting
+        resources"),d=[i()]):(console.log("Creating
+        resources"),d=[c(),u()]),Promise.all(d).then(()=>(console.log("All
+        actions successfully performed"),l("SUCCESS",{Message:`Resources
+        successfully
+        ${a.toLowerCase()}d`}))).catch(e=>console.log(e)||l("FAILED"))})},function(e,t){e.exports=require("aws-sdk")},function(e,t,o){const
+        n=o(4),r=o(5);e.exports=((e,t,o)=>{let s;const
+        c=e=>(clearTimeout(s),e&&(console.log("There was an
+        error"),console.log(e)),o(e)),i=(o,s)=>{const
+        i=JSON.stringify({Status:o,Reason:`Details:
+        ${t.logStreamName}`,PhysicalResourceId:t.logStreamName,StackId:e.StackId,RequestId:e.RequestId,LogicalResourceId:e.LogicalResourceId,Data:s}),u={url:e.ResponseURL,body:i,method:"PUT"};return
+        console.log(`Making HTTP request to ${e.ResponseURL}: ${i}`),(e=>{const
+        t=Object.assign({},r.parse(e.url),{method:e.method,headers:{"Content-Type":"","Content-Length":Buffer.byteLength(e.body)}});return
+        new Promise((o,r)=>{const s=n.request(t,e=>{const
+        t=[];if(200!==e.statusCode)return
+        r(e);e.setEncoding("utf8"),e.on("data",e=>t.push(e)),e.on("error",r),e.on("end",()=>o(Buffer.concat(t)))});s.write(e.body),s.end()})})(u).then(e=>(console.log(e),c())).catch(e=>c(e))};return
+        s=setTimeout(()=>i("FAILED").then(()=>o(new Error("Function timed
+        out"))),t.getRemainingTimeInMillis()-1e3),{sendResponse:i}})},function(e,t){e.exports=require("https")},function(e,t){e.exports=require("url")},function(e,t){const{API_GATEWAY:o,COGNITO_IDENTITY_POOL:n,FROM_BUCKET:r,MAX_TASKS:s,REGION:c,TO_BUCKET:i}=process.env;e.exports=(e=>{const
+        t=t=>e.listObjects(t).promise();return{copyFiles:()=>t({Bucket:r,Prefix:"static/"}).then(t=>Promise.all(t.Contents.map(t=>(t=>e.copyObject(t).promise())({ACL:"public-read",Bucket:i,CopySource:`${r}/${t.Key}`,Key:t.Key.slice("static/".length)})))),removeFiles:()=>t({Bucket:i}).then(t=>Promise.all(t.Contents.map(e=>e.Key).map(t=>(t=>e.deleteObject(t).promise())({Bucket:i,Key:t})))),writeSettings:()=>e.putObject({ACL:"public-read",Bucket:i,Key:"settings.js",Body:`window.mediaAnalysisSettings
+        =
+        ${JSON.stringify({apiGateway:o,cognitoIdentityPool:n,maxTasks:parseInt(s,10),region:c})};`}).promise()}})}]);
   RestApi:
-    Type: AWS::Serverless::Api
+    Type: 'AWS::Serverless::Api'
     Name: MediaAnalysisAPI
     Properties:
       StageName: PROD
       EndpointConfiguration: REGIONAL
       DefinitionBody:
-        swagger: 2.0
+        swagger: 2
         info:
-          version: 1.0
+          version: 1
           title: MediaAnalysisAPI
         basePath: /PROD
         paths:
@@ -476,24 +183,28 @@ Resources:
               produces:
                 - application/json
               responses:
-                "200":
+                '200':
                   description: 200 response
                   schema:
-                    $ref: "#/definitions/Empty"
+                    $ref: '#/definitions/Empty'
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
               x-amazon-apigateway-integration:
-                credentials: !GetAtt DbReadRole.Arn
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
+                credentials:
+                  'Fn::GetAtt':
+                    - DbReadRole
+                    - Arn
+                uri:
+                  'Fn::Sub': 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query'
                 responses:
                   default:
-                    statusCode: "200"
+                    statusCode: '200'
                     responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type'''
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -510,29 +221,30 @@ Resources:
                           ]
                         }
                 requestTemplates:
-                  application/json: !Sub |
-                    {
-                      "TableName": "${TranscriptDynamoTable}",
-                      "IndexName": "MediaAnalysisLSI",
-                      "KeyConditionExpression": "MediaUrl = :murl AND FragmentTimestamp BETWEEN :from AND :to",
-                      "ProjectionExpression": "FragmentTimestamp,Transcript,IsPartial",
-                      "ExpressionAttributeValues": {
-                        ":murl": {
-                          "S": "$util.urlDecode($input.params().querystring.get('mediaUrl'))"
-                        },
-                        ":from": {
-                          "N": "$input.params().querystring.get('from')"
-                        },
-                        ":to": {
-                          "N": "$input.params().querystring.get('to')"
+                  application/json:
+                    'Fn::Sub': |
+                      {
+                        "TableName": "${TranscriptDynamoTable}",
+                        "IndexName": "MediaAnalysisLSI",
+                        "KeyConditionExpression": "MediaUrl = :murl AND FragmentTimestamp BETWEEN :from AND :to",
+                        "ProjectionExpression": "FragmentTimestamp,Transcript,IsPartial",
+                        "ExpressionAttributeValues": {
+                          ":murl": {
+                            "S": "$util.urlDecode($input.params().querystring.get('mediaUrl'))"
+                          },
+                          ":from": {
+                            "N": "$input.params().querystring.get('from')"
+                          },
+                          ":to": {
+                            "N": "$input.params().querystring.get('to')"
+                          }
                         }
                       }
-                    }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
           /tasks:
             get:
               consumes:
@@ -540,32 +252,34 @@ Resources:
               produces:
                 - application/json
               responses:
-                "200":
+                '200':
                   description: 200 response
                   schema:
-                    $ref: "#/definitions/Empty"
+                    $ref: '#/definitions/Empty'
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
               x-amazon-apigateway-integration:
-                credentials: !GetAtt DbReadRole.Arn
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Scan
+                credentials:
+                  'Fn::GetAtt':
+                    - DbReadRole
+                    - Arn
+                uri:
+                  'Fn::Sub': 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/Scan'
                 responses:
                   default:
-                    statusCode: "200"
+                    statusCode: '200'
                     responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type'''
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
                         {
                           "tasks": [
                             #foreach($elem in $inputRoot.Items) {
-                              "mediaDescription": "$util.escapeJavaScript($elem.MediaDescription.S).replaceAll("\\'","'")",
-                              "mediaTitle": "$util.escapeJavaScript($elem.MediaTitle.S).replaceAll("\\'","'")",
                               "mediaUrl": "$elem.MediaUrl.S",
                               "taskStatus": "$elem.TaskStatus.S",
                               "taskId": "$elem.TaskId.S"
@@ -574,252 +288,243 @@ Resources:
                           ]
                         }
                 requestTemplates:
-                  application/json: !Sub |
-                    {
-                      "TableName": "${TasksDynamoTable}",
-                      "ProjectionExpression": "MediaDescription, MediaTitle, MediaUrl, TaskStatus, TaskId",
-                      "ConsistentRead": true
-                    }
+                  application/json:
+                    'Fn::Sub': |
+                      {
+                        "TableName": "${TasksDynamoTable}",
+                        "ProjectionExpression": "MediaUrl, TaskStatus, TaskId",
+                        "ConsistentRead": true
+                      }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
-          /tasks/{mediaUrl}:
+                - sigv4: []
+          '/tasks/{mediaUrl}':
             get:
               consumes:
                 - application/json
               produces:
                 - application/json
               responses:
-                "200":
+                '200':
                   description: 200 response
                   schema:
-                    $ref: "#/definitions/Empty"
+                    $ref: '#/definitions/Empty'
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
               x-amazon-apigateway-integration:
-                credentials: !GetAtt DbWriteRole.Arn
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
+                credentials:
+                  'Fn::GetAtt':
+                    - DbWriteRole
+                    - Arn
+                uri:
+                  'Fn::Sub': 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query'
                 responses:
                   default:
-                    statusCode: "200"
+                    statusCode: '200'
                     responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type'''
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
                         #foreach($elem in $inputRoot.Items) {
-                          "mediaDescription": "$util.escapeJavaScript($elem.MediaDescription.S).replaceAll("\\'","'")",
-                          "mediaTitle": "$util.escapeJavaScript($elem.MediaTitle.S).replaceAll("\\'","'")",
                           "mediaUrl": "$elem.MediaUrl.S",
                           "taskStatus": "$elem.TaskStatus.S",
                           "taskId": "$elem.TaskId.S"
                         }
                         #end
                 requestTemplates:
-                  application/json: !Sub |
-                    {
-                      "TableName": "${TasksDynamoTable}",
-                      "KeyConditionExpression": "MediaUrl = :murl",
-                      "ExpressionAttributeValues": {
-                        ":murl": {
-                          "S": "$util.urlDecode($input.params('mediaUrl'))"
-                        }
-                      },
-                      "ConsistentRead": true
-                    }
+                  application/json:
+                    'Fn::Sub': |
+                      {
+                        "TableName": "${TasksDynamoTable}",
+                        "KeyConditionExpression": "MediaUrl = :murl",
+                        "ExpressionAttributeValues": {
+                          ":murl": {
+                            "S": "$util.urlDecode($input.params('mediaUrl'))"
+                          }
+                        },
+                        "ConsistentRead": true
+                      }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
             delete:
               consumes:
                 - application/json
               produces:
                 - application/json
               responses:
-                "200":
+                '200':
                   description: 200 response
                   schema:
-                    $ref: "#/definitions/Empty"
+                    $ref: '#/definitions/Empty'
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
               x-amazon-apigateway-integration:
-                credentials: !GetAtt DbWriteRole.Arn
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/UpdateItem
+                credentials:
+                  'Fn::GetAtt':
+                    - DbWriteRole
+                    - Arn
+                uri:
+                  'Fn::Sub': 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/UpdateItem'
                 responses:
                   default:
-                    statusCode: "200"
+                    statusCode: '200'
                     responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type'''
                     responseTemplates:
                       application/json: |
                         {
                           "ok": true
                         }
                 requestTemplates:
-                  application/json: !Sub |
-                    {
-                      "TableName": "${TasksDynamoTable}",
-                      "Key": {
-                        "MediaUrl": {
-                          "S": "$util.urlDecode($input.params('mediaUrl'))"
-                        }
-                      },
-                      "UpdateExpression": "set TaskStatus = :newStatus",
-                      "ExpressionAttributeValues": {
-                        ":newStatus": {
-                          "S": "TERMINATING"
-                        }
-                      }                      
-                    }
+                  application/json:
+                    'Fn::Sub': |
+                      {
+                        "TableName": "${TasksDynamoTable}",
+                        "Key": {
+                          "MediaUrl": {
+                            "S": "$util.urlDecode($input.params('mediaUrl'))"
+                          }
+                        },
+                        "UpdateExpression": "set TaskStatus = :newStatus",
+                        "ExpressionAttributeValues": {
+                          ":newStatus": {
+                            "S": "TERMINATING"
+                          }
+                        }                      
+                      }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
             put:
               consumes:
                 - application/json
               produces:
                 - application/json
               responses:
-                "200":
+                '200':
                   description: 200 response
                   schema:
-                    $ref: "#/definitions/Empty"
+                    $ref: '#/definitions/Empty'
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
               x-amazon-apigateway-integration:
-                credentials: !GetAtt DbWriteRole.Arn
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem
+                credentials:
+                  'Fn::GetAtt':
+                    - DbWriteRole
+                    - Arn
+                uri:
+                  'Fn::Sub': 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem'
                 responses:
                   default:
-                    statusCode: "200"
+                    statusCode: '200'
                     responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type'''
                     responseTemplates:
                       application/json: |
                         {
                           "ok": true
                         }
                 requestTemplates:
-                  application/json: !Sub |
-                    {
-                      "TableName": "${TasksDynamoTable}",
-                      "Item": {
-                        "MediaDescription": {
-                          "S": $input.json('$.mediaDescription')
-                        },
-                        "MediaUrl": {
-                          "S": "$util.urlDecode($input.params('mediaUrl'))"
-                        },
-                        "MediaTitle": {
-                          "S": $input.json('$.mediaTitle')
-                        },
-                        "TaskStatus": {
-                          "S": "WAITING"
+                  application/json:
+                    'Fn::Sub': |
+                      {
+                        "TableName": "${TasksDynamoTable}",
+                        "Item": {
+                          "MediaUrl": {
+                            "S": "$util.urlDecode($input.params('mediaUrl'))"
+                          },
+                          "TaskStatus": {
+                            "S": "WAITING"
+                          }
                         }
                       }
-                    }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
         securityDefinitions:
           sigv4:
             type: apiKey
             name: Authorization
             in: header
             x-amazon-apigateway-authtype: awsSigv4
-
-  S3Endpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      RouteTableIds:
-        - !Ref PrivateRouteTable1
-        - !Ref PrivateRouteTable2
-        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
-      VpcId: !Ref VPC
-
-  SetupWebUI:
-    Type: Custom::Setup
-    Properties:
-      ServiceToken: !GetAtt LambdaSetup.Arn
-      Region: !Ref AWS::Region
-
   TasksDynamoTable:
-    Type: AWS::DynamoDB::Table
+    Type: 'AWS::DynamoDB::Table'
     Properties:
       TableName: MediaAnalysisTasks
-      AttributeDefinitions: 
-        - 
-          AttributeName: MediaUrl
+      AttributeDefinitions:
+        - AttributeName: MediaUrl
           AttributeType: S
-      KeySchema: 
-        - 
-          AttributeName: MediaUrl
+      KeySchema:
+        - AttributeName: MediaUrl
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
-
   TranscriptDynamoTable:
-    Type: AWS::DynamoDB::Table
+    Type: 'AWS::DynamoDB::Table'
     Properties:
       TableName: MediaAnalysisTranscript
-      AttributeDefinitions: 
-        - 
-          AttributeName: MediaUrl
+      AttributeDefinitions:
+        - AttributeName: MediaUrl
           AttributeType: S
-        - 
-          AttributeName: ResultId
+        - AttributeName: ResultId
           AttributeType: S
-        - 
-          AttributeName: FragmentTimestamp
-          AttributeType: N
-      KeySchema: 
-        - 
-          AttributeName: MediaUrl
+        - AttributeName: FragmentTimestamp
+          AttributeType: 'N'
+      KeySchema:
+        - AttributeName: MediaUrl
           KeyType: HASH
-        - 
-          AttributeName: ResultId
+        - AttributeName: ResultId
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
-      LocalSecondaryIndexes: 
-        - 
-          IndexName: MediaAnalysisLSI
-          KeySchema: 
-            - 
-              AttributeName: MediaUrl
+      LocalSecondaryIndexes:
+        - IndexName: MediaAnalysisLSI
+          KeySchema:
+            - AttributeName: MediaUrl
               KeyType: HASH
-            - 
-              AttributeName: FragmentTimestamp
+            - AttributeName: FragmentTimestamp
               KeyType: RANGE
-          Projection: 
+          Projection:
             ProjectionType: ALL
-
+  SetupWebUI:
+    Type: 'Custom::Setup'
+    Properties:
+      ServiceToken:
+        'Fn::GetAtt':
+          - LambdaSetup
+          - Arn
+      Region:
+        Ref: 'AWS::Region'
   WebUIBucket:
-    Type: AWS::S3::Bucket
+    Type: 'AWS::S3::Bucket'
     Properties:
       CorsConfiguration:
         CorsRules:
-        - AllowedHeaders: ['*']
-          AllowedMethods: [GET]
-          AllowedOrigins: ['*']
-          Id: MediaAnalysisCorsRule
-          MaxAge: 3600
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - '*'
+            Id: MediaAnalysisCorsRule
+            MaxAge: 3600
