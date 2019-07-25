@@ -1,7 +1,11 @@
 .DS_Store
+.idea
+.python-version
+
 dist
 node_modules
 npm-debug.log*
+package-lock.json
 
 src/backend/transcriber/.classpath
 src/backend/transcriber/.factorypath
@@ -14,7 +18,6 @@ src/frontend/build
 src/frontend/dist
 src/frontend/public/settings.js
 
-package-lock.json
+taskcat_outputs
 templates
 yarn.lock
-.idea
