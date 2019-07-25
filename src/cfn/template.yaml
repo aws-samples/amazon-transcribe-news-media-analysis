@@ -235,7 +235,7 @@ Resources:
                               "mediaTitle": "$util.escapeJavaScript($elem.MediaTitle.S).replaceAll("\\'","'")",
                               "mediaUrl": "$elem.MediaUrl.S",
                               "taskStatus": "$elem.TaskStatus.S",
-                              "taskId": "$elem.TaskId.S"
+                              "taskArn": "$elem.TaskArn.S"
                             }#if($foreach.hasNext),#end
                             #end
                           ]
@@ -244,7 +244,7 @@ Resources:
                   application/json: !Sub |
                     {
                       "TableName": "${TasksDynamoTable}",
-                      "ProjectionExpression": "MediaDescription, MediaTitle, MediaUrl, TaskStatus, TaskId",
+                      "ProjectionExpression": "MediaDescription, MediaTitle, MediaUrl, TaskStatus, TaskArn",
                       "ConsistentRead": true
                     }
                 passthroughBehavior: when_no_match
@@ -285,7 +285,7 @@ Resources:
                           "mediaTitle": "$util.escapeJavaScript($elem.MediaTitle.S).replaceAll("\\'","'")",
                           "mediaUrl": "$elem.MediaUrl.S",
                           "taskStatus": "$elem.TaskStatus.S",
-                          "taskId": "$elem.TaskId.S"
+                          "taskArn": "$elem.TaskArn.S"
                         }
                         #end
                 requestTemplates:

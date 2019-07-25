@@ -16,15 +16,13 @@
  */
 package com.amazonaws.transcriber;
 
-
 import com.amazonaws.transcribestreaming.AudioStreamPublisher;
 import com.amazonaws.transcribestreaming.retryclient.StreamTranscriptionBehavior;
 import com.amazonaws.transcribestreaming.retryclient.TranscribeStreamingRetryClient;
 import com.google.common.base.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
+
 import software.amazon.awssdk.services.transcribestreaming.TranscribeStreamingAsyncClient;
 import software.amazon.awssdk.services.transcribestreaming.model.LanguageCode;
 import software.amazon.awssdk.services.transcribestreaming.model.MediaEncoding;
@@ -34,9 +32,9 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 
-public class Transcriber {
+class Transcriber {
     private static final Logger logger = LogManager.getLogger(Transcriber.class);
     
     private final MediaEncoding encoding;
@@ -48,8 +46,8 @@ public class Transcriber {
     private TranscribeStreamingRetryClient retryClient;
     private AudioStreamPublisher audioStreamPublisher;
 
-    public Transcriber(String mediaUrl, LanguageCode language, MediaEncoding encoding,
-                       int sampleRate, String vocabularyName) {
+    Transcriber(String mediaUrl, LanguageCode language, MediaEncoding encoding,
+                int sampleRate, String vocabularyName) {
 
         this.encoding = encoding;
         this.sampleRate = sampleRate;
@@ -59,7 +57,7 @@ public class Transcriber {
         this.handler = new ResponseHandler(mediaUrl);
     }
 
-    public void start(InputStream inputStream) throws InterruptedException, ExecutionException {
+    CompletableFuture<Void> start(InputStream inputStream) {
         if (audioStreamPublisher != null) {
             throw new IllegalStateException("Already running");
         }
@@ -74,7 +72,7 @@ public class Transcriber {
         }
         StartStreamTranscriptionRequest request = requestBuilder.build();
         audioStreamPublisher = new AudioStreamPublisher(new BufferedInputStream(inputStream));
-        retryClient.startStreamTranscription(request, audioStreamPublisher, handler).get();
+        return retryClient.startStreamTranscription(request, audioStreamPublisher, handler);
     }
 
     public void stop() {

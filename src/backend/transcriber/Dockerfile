@@ -15,7 +15,4 @@ COPY target/transcriber-1.0-SNAPSHOT-jar-with-dependencies.jar /transcriber.jar
 
 COPY src/main/resources/log4j2.xml log4j2.xml
 
-#ENTRYPOINT [ "java", "-jar", "/mediainfer.jar" ]
-#java -jar /mediainfer.jar blah https://www.youtube.com/watch?v=lrX6ktLg8WQ --youtubedl-path /usr/local/bin/youtube-dl --transcribe-kinesis-stream-name MyKinesisStream --ffmpeg-path ffmpeg/ffmpeg
-
-CMD ["bash"]
+CMD [ "java", "-jar", "-Dlog4j.configurationFile=log4j2.xml", "/transcriber.jar" ]
