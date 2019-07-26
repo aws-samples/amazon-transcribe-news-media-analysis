@@ -424,6 +424,7 @@ Resources:
 
   SetupWebUIAndDockerImage:
     Type: Custom::Setup
+    DependsOn: CodePipeline
     Properties:
       ServiceToken: !GetAtt LambdaSetup.Arn
       Region: !Ref AWS::Region
@@ -544,7 +545,6 @@ Resources:
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
-    DependsOn: SetupWebUIAndDockerImage
     Properties:
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
