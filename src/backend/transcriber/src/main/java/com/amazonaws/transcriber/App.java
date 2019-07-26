@@ -43,7 +43,7 @@ public class App {
 
     public static void main(String... args) {
         String input = config.mediaUrl();
-        Optional<LifecycleInfoPersister> lcpOpt = createLifecycleInfoPersister(input);
+        LifecycleInfoPersister lcp  = new LifecycleInfoPersister(input);
         logger.info("Input is {}", input);
         if (input.startsWith("https://www.youtube.com/")) {
             input = getYouTubeUrl(config.youtubeDlPath(), input);
@@ -54,36 +54,37 @@ public class App {
             config.mediaSampleRate(), "");
         Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
 
-        addShutdownHook(transcriber, encoder, lcpOpt);
+        addShutdownHook(transcriber, encoder, lcp);
 
         InputStream mediaStream = encoder.start();
         try {
             CompletableFuture<Void> promise = transcriber.start(mediaStream);
 
-            lcpOpt.ifPresent(lcp -> {
+            if(config.persistLifecycleInfo()) {
                 logger.info("Persisting lifecycle stage PROCESSING in DynamoDb...");
                 lcp.transcriptionBegun();
-            });
+            }
             // this blocks the main thread, we could have multiple transcriptions if we want by
             // storing the promises in an array and then using an infinite loop to keep the main
             // thread alive but as we only have one video per container this is not necessary
             promise.get();
         } catch (InterruptedException | ExecutionException ex) {
             logger.error("Transcription stopped...", ex);
-            lcpOpt.ifPresent(LifecycleInfoPersister::transcriptionTerminating);
+            if(config.persistLifecycleInfo()) lcp.transcriptionTerminating();
         }
     }
 
-    private static void addShutdownHook(Transcriber transcriber, Encoder encoder, Optional<LifecycleInfoPersister> lcpOpt) {
+    private static void addShutdownHook(Transcriber transcriber, Encoder encoder, LifecycleInfoPersister lcp) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Stopping transcription.");
             transcriber.stop();
             logger.info("Stopping ffmpeg encoding.");
             encoder.stop();
-            lcpOpt.ifPresent(lcp -> {
+
+            if(config.persistLifecycleInfo()) {
                 logger.info("Persisting lifecycle stage TERMINATING in DynamoDb...");
                 lcp.transcriptionTerminating();
-            });
+            }
 
             //shutdown log4j2
             if( LogManager.getContext() instanceof LoggerContext ) {
@@ -93,14 +94,6 @@ public class App {
                 logger.warn("Unable to shutdown log4j2");
             }
         }));
-    }
-
-    private static Optional<LifecycleInfoPersister> createLifecycleInfoPersister(String input) {
-        LifecycleInfoPersister lcp = null;
-        if(config.persistLifecycleInfo()) {
-            lcp = new LifecycleInfoPersister(input);
-        }
-        return Optional.ofNullable(lcp);
     }
 
     //TODO: use Optional or throw with a meaningful exception as currently this method can cause a NullPointerException
