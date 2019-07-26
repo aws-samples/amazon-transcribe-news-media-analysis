@@ -41,26 +41,17 @@ public class TranscribedSegmentWriter {
         this.mediaUrl = mediaUrl;
     }
 
-    public DynamoDbClient getDdbClient() {
-
-        return this.ddbClient;
-    }
-
     public void writeToDynamoDB(long responseTime, String transcript, Result result) {
+        logger.debug("Inserting item into DynamoDb...");
         PutItemRequest request = PutItemRequest.builder()
             .tableName(this.ddbTableName)
             .item(toDynamoDbItem(responseTime, transcript, result))
             .build();
-
         ddbClient.putItem(request);
-//
-//        return this.ddbClient.putItem(request).whenComplete((res, ex) -> {
-//            if (ex != null) logger.error(ex);
-//        });
+        logger.debug("Item inserted into DynamoDb...");
     }
 
     private Map<String,AttributeValue> toDynamoDbItem(long responseTime, String transcript, Result result) {
-
         Map<String,AttributeValue> itemValues = new HashMap<>();
 
         itemValues.put("MediaUrl", AttributeValue.builder().s(mediaUrl).build());

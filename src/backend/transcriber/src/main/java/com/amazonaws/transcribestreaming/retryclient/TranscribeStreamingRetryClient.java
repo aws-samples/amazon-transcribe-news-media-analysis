@@ -147,7 +147,7 @@ public class TranscribeStreamingRetryClient {
             if (e != null) {
 
                 if (retryAttempt <= maxRetries && isExceptionRetriable(e)) {
-                    System.err.println("Retry attempt:" + (retryAttempt+1) );
+                    System.err.println("Retry attempt:" + (retryAttempt + 1) );
 
                     try {
                         Thread.sleep(sleepTime);
@@ -200,11 +200,9 @@ public class TranscribeStreamingRetryClient {
      */
     private boolean isExceptionRetriable(Throwable e) {
         e.printStackTrace();
-        if (nonRetriableExceptions.contains(e.getClass())) {
-            return false;
-        }
-        return true;
+        return nonRetriableExceptions.contains(e.getClass());
     }
+
     public void close() {
         this.client.close();
     }
