@@ -1,5 +1,6 @@
 const {
   API_GATEWAY,
+  BUILD_BUCKET,
   COGNITO_IDENTITY_POOL,
   FROM_BUCKET,
   MAX_TASKS,
@@ -7,13 +8,22 @@ const {
   TO_BUCKET
 } = process.env;
 
+const BACKEND_PATH = "docker/backend.zip";
 const CONFIG_FILENAME = "settings.js";
 const FROM_PREFIX = "static/";
 
 module.exports = s3 => {
   const copyFile = params => s3.copyObject(params).promise();
-  const deleteFile = params => s3.deleteObject(params).promise();
+  const deleteFiles = params => s3.deleteObjects(params).promise();
   const listFiles = params => s3.listObjects(params).promise();
+
+  const mapListToBulkDelete = (result, bucket) => ({
+    Bucket: bucket,
+    Delete: {
+      Objects: result.Contents.map(({ Key }) => ({ Key })),
+      Quiet: false
+    }
+  });
 
   return {
     copyFiles: () =>
@@ -34,18 +44,20 @@ module.exports = s3 => {
       ),
 
     removeFiles: () =>
-      listFiles({
-        Bucket: TO_BUCKET
-      }).then(result =>
-        Promise.all(
-          result.Contents.map(file => file.Key).map(file =>
-            deleteFile({
-              Bucket: TO_BUCKET,
-              Key: file
-            })
+      listFiles({ Bucket: TO_BUCKET }).then(result =>
+        deleteFiles(mapListToBulkDelete(result, TO_BUCKET)).then(() =>
+          listFiles({ Bucket: BUILD_BUCKET }).then(result =>
+            deleteFiles(mapListToBulkDelete(result, BUILD_BUCKET))
           )
         )
       ),
+
+    writeImage: () =>
+      copyFile({
+        Bucket: BUILD_BUCKET,
+        CopySource: `${FROM_BUCKET}/${BACKEND_PATH}`,
+        Key: BACKEND_PATH
+      }),
 
     writeSettings: () =>
       s3
