@@ -15,7 +15,6 @@ public class TranscriberConfig {
     private String ffmpegPath = utils.parseEnvVar("FFMPEG_EXE", "/ffmpeg/ffmpeg");
     private String youtubeDlPath = utils.parseEnvVar("YOUTUBE_DL_EXE", "/usr/local/bin/youtube-dl");
     private int mediaSampleRate = utils.parseEnvVar("MEDIA_SAMPLE_RATE", 16000);
-    private boolean persistLifecycleInfo = utils.parseEnvVar("PERSIST_LIFECYCLE_INFO", true);
     private String transcriptsDynamoDbTable = utils.requiredEnvVar("TRANSCRIPTS_DYNAMO_DB_TABLE");
     private String tasksDynamoDbTable = utils.requiredEnvVar("TASKS_DYNAMO_DB_TABLE");
     private String mediaUrl = utils.requiredEnvVar("MEDIA_URL");
@@ -41,15 +40,11 @@ public class TranscriberConfig {
         return mediaSampleRate;
     }
 
-    boolean persistLifecycleInfo() {
-        return persistLifecycleInfo;
-    }
-
     String transcriptsDynamoDbTable() {
         return transcriptsDynamoDbTable;
     }
 
-    public String tasksDynamoDbTable() {
+    String tasksDynamoDbTable() {
         return tasksDynamoDbTable;
     }
 

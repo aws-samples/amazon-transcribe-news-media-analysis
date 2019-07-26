@@ -31,7 +31,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -51,7 +50,7 @@ public class App {
         }
 
         Transcriber transcriber = new Transcriber(input, LanguageCode.EN_US, MediaEncoding.PCM,
-            config.mediaSampleRate(), "");
+            config.mediaSampleRate(), config.vocabularyName().orElse(""));
         Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
 
         addShutdownHook(transcriber, encoder, lcp);
@@ -60,17 +59,15 @@ public class App {
         try {
             CompletableFuture<Void> promise = transcriber.start(mediaStream);
 
-            if(config.persistLifecycleInfo()) {
-                logger.info("Persisting lifecycle stage PROCESSING in DynamoDb...");
-                lcp.transcriptionBegun();
-            }
+            logger.info("Persisting lifecycle stage PROCESSING in DynamoDb...");
+            lcp.transcriptionBegun();
             // this blocks the main thread, we could have multiple transcriptions if we want by
             // storing the promises in an array and then using an infinite loop to keep the main
             // thread alive but as we only have one video per container this is not necessary
             promise.get();
         } catch (InterruptedException | ExecutionException ex) {
             logger.error("Transcription stopped...", ex);
-            if(config.persistLifecycleInfo()) lcp.transcriptionTerminating();
+            lcp.transcriptionTerminating();
         }
     }
 
@@ -81,10 +78,8 @@ public class App {
             logger.info("Stopping ffmpeg encoding.");
             encoder.stop();
 
-            if(config.persistLifecycleInfo()) {
-                logger.info("Persisting lifecycle stage TERMINATING in DynamoDb...");
-                lcp.transcriptionTerminating();
-            }
+            logger.info("Persisting lifecycle stage TERMINATING in DynamoDb...");
+            lcp.transcriptionTerminating();
 
             //shutdown log4j2
             if( LogManager.getContext() instanceof LoggerContext ) {
