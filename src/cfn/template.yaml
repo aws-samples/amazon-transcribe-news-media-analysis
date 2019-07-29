@@ -403,11 +403,13 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyName: MediaAnalysis-setup-S3-fc
+        - PolicyName: MediaAnalysis-setup-resources
           PolicyDocument:
             Statement:
             - Effect: Allow
-              Action: 's3:*'
+              Action:
+                - 's3:*'
+                - 'ecr:*'
               Resource: '*'
         - PolicyName: MediaAnalysis-cloudwatch-logs
           PolicyDocument:
@@ -415,12 +417,6 @@ Resources:
             - Effect: Allow
               Action: 'logs:*'
               Resource: 'arn:aws:logs:*:*:*'
-        - PolicyName: MediaAnalysis-setup-ecr
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action: 'ecr:DeleteRepository'
-              Resource: '*'
 
   SetupWebUIAndDockerImage:
     Type: Custom::Setup
@@ -500,9 +496,6 @@ Resources:
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
-                - printf '[{"name":"simple-app","imageUri":"%s"}]' "$IMAGE_URI" > images.json
-          artifacts:
-            files: images.json
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/docker:17.09.0
@@ -557,13 +550,13 @@ Resources:
               ActionTypeId:
                 Category: Source
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: S3
               Configuration:
                 S3Bucket: !Ref CodeBuildArtifactBucket
-                S3ObjectKey: docker/backend.zip
+                S3ObjectKey: build/backend.zip
               OutputArtifacts:
-                - Name: Image
+                - Name: Backend
               RunOrder: 1
         - Name: Build
           Actions:
@@ -571,12 +564,12 @@ Resources:
               ActionTypeId:
                 Category: Build
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref CodeBuildProject
               InputArtifacts:
-                - Name: Image
+                - Name: Backend
               OutputArtifacts:
                 - Name: BuildOutput
               RunOrder: 1

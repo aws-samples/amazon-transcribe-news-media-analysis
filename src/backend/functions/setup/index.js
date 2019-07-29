@@ -7,7 +7,7 @@ exports.handler = (event, context, callback) => {
   const { copyFiles, removeFiles, writeImage, writeSettings } = S3Handler(
     new AWS.S3()
   );
-  const { removeRepository } = ECRHandler(new AWS.ECR());
+  const { removeImages } = ECRHandler(new AWS.ECR());
   const { sendResponse } = ResponseHandler(event, context, callback);
 
   const eventType = event.RequestType;
@@ -15,7 +15,7 @@ exports.handler = (event, context, callback) => {
 
   if (eventType === "Delete") {
     console.log("Deleting resources");
-    actions = [removeFiles(), removeRepository()];
+    actions = [removeFiles(), removeImages()];
   } else {
     console.log("Creating resources");
     actions = [copyFiles(), writeImage(), writeSettings()];
