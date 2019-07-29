@@ -87,6 +87,9 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: !Ref VpcIpBlock
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} VPC
 
   EIPfor1:
     Type: AWS::EC2::EIP
@@ -220,6 +223,9 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: !Select [ 0, !Ref PrivateSubnetIpBlocks ]
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Private Subnet 1
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -227,6 +233,9 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: !Select [ 1, !Ref PrivateSubnetIpBlocks ]
       AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Private Subnet 2
 
   PrivateSubnet3:
     Type: AWS::EC2::Subnet
@@ -235,6 +244,9 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: !Select [ 2, !Ref PrivateSubnetIpBlocks ]
       AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Private Subnet 3
 
   PrivateSubnetNetworkAclAssociation1:
     Type: AWS::EC2::SubnetNetworkAclAssociation
@@ -319,6 +331,9 @@ Resources:
       CidrBlock: !Select [ 0, !Ref PublicSubnetIpBlocks ]
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Subnet 1
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -327,6 +342,9 @@ Resources:
       CidrBlock: !Select [ 1, !Ref PublicSubnetIpBlocks ]
       AvailabilityZone: !Select [ 1, !GetAZs '' ]
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Subnet 2
 
   PublicSubnet3:
     Type: AWS::EC2::Subnet
@@ -336,6 +354,9 @@ Resources:
       CidrBlock: !Select [ 2, !Ref PublicSubnetIpBlocks ]
       AvailabilityZone: !Select [ 2, !GetAZs '' ]
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Subnet 3
 
   PublicSubnetNetworkAclAssociation1:
     Type: AWS::EC2::SubnetNetworkAclAssociation
