@@ -7,10 +7,12 @@ Globals:
     Environment:
       Variables:
         API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
+        BUILD_BUCKET: !Ref CodeBuildArtifactBucket
         COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
         FROM_BUCKET: media-analysis-demo
         MAX_TASKS: !Ref MaxTasksCapacity
         REGION: !Ref AWS::Region
+        REPOSITORY: !Ref ECRRepository
         TO_BUCKET: !Ref WebUIBucket
         VPC_ID: !Ref VPC
   Api:
@@ -77,104 +79,14 @@ Conditions:
 
 Resources:
 
+  # Network configuration
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: !Ref VpcIpBlock
-
-  ApiGatewayInvokeRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Federated:
-                - cognito-identity.amazonaws.com
-            Action:
-              - sts:AssumeRoleWithWebIdentity
-
-  CustomResourceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: MediaAnalysis-setup-S3-fc
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action: 's3:*'
-              Resource: '*'
-        - PolicyName: MediaAnalysis-cloudwatch-logs
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action: 'logs:*'
-              Resource: 'arn:aws:logs:*:*:*'
-
-  CognitoIdentityPool:
-    Type: AWS::Cognito::IdentityPool
-    Properties:
-      IdentityPoolName: MediaAnalysisIdentityPool
-      AllowUnauthenticatedIdentities: true
-
-  CognitoIdentityPoolRole:
-    Type: AWS::Cognito::IdentityPoolRoleAttachment
-    Properties:
-      IdentityPoolId: !Ref CognitoIdentityPool
-      Roles:
-        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
-        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
-
-  DbReadRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-            Action:
-              - sts:AssumeRole
-
-  DbWriteRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-            Action:
-              - sts:AssumeRole
-
-  DynamoDBEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      RouteTableIds:
-        - !Ref PrivateRouteTable1
-        - !Ref PrivateRouteTable2
-        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
-      VpcId: !Ref VPC
 
   EIPfor1:
     Type: AWS::EC2::EIP
@@ -200,18 +112,6 @@ Resources:
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-
-  LambdaSetup:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: MediaAnalysisSetup
-      Runtime: nodejs8.10
-      Handler: index.handler
-      CodeUri: ../backend/functions/setup/
-      Description: Custom Lambda resource for the Media Analysis Cloudformation Stack
-      MemorySize: 128
-      Timeout: 30
-      Role: !GetAtt CustomResourceRole.Arn
 
   NatGateway1:
     Type: AWS::EC2::NatGateway
@@ -455,6 +355,333 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet3
       NetworkAclId: !Ref PublicNetworkAcl
+
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
+      VpcId: !Ref VPC
+
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: !Ref VPC
+
+  # Custom Resources
+
+  LambdaSetup:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: MediaAnalysisSetup
+      Runtime: nodejs8.10
+      Handler: index.handler
+      CodeUri: ../backend/functions/setup/
+      Description: Custom Lambda resource for the Media Analysis Cloudformation Stack
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt CustomResourceRole.Arn
+
+  CustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: MediaAnalysis-setup-resources
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - 's3:*'
+                - 'ecr:*'
+              Resource: '*'
+        - PolicyName: MediaAnalysis-cloudwatch-logs
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action: 'logs:*'
+              Resource: 'arn:aws:logs:*:*:*'
+
+  SetupWebUIAndDockerImage:
+    Type: Custom::Setup
+    DependsOn: CodePipeline
+    Properties:
+      ServiceToken: !GetAtt LambdaSetup.Arn
+      Region: !Ref AWS::Region
+
+  # Computing & Containers
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+
+  ECRRepository:
+    Type: AWS::ECR::Repository
+
+  CodeBuildArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - ecr:GetAuthorizationToken
+              - Resource: !Sub arn:aws:s3:::${CodeBuildArtifactBucket}/*
+                Effect: Allow
+                Action:
+                  - s3:*
+              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - $(aws ecr get-login --no-include-email)
+                - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
+                - IMAGE_URI="${REPOSITORY_URI}:${TAG}"
+            build:
+              commands:
+                - docker build --tag "$IMAGE_URI" .
+            post_build:
+              commands:
+                - docker push "$IMAGE_URI"
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:17.09.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: REPOSITORY_URI
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}
+      Name: !Ref AWS::StackName
+      ServiceRole: !Ref CodeBuildServiceRole
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:DescribeTaskDefinition
+                  - ecs:DescribeTasks
+                  - ecs:ListTasks
+                  - ecs:RegisterTaskDefinition
+                  - ecs:UpdateService
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - iam:PassRole
+                  - s3:*
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodeBuildArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: App
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: "1"
+                Provider: S3
+              Configuration:
+                S3Bucket: !Ref CodeBuildArtifactBucket
+                S3ObjectKey: build/backend.zip
+              OutputArtifacts:
+                - Name: Backend
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              InputArtifacts:
+                - Name: Backend
+              OutputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1
+
+  # Data
+
+  DbReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  DbWriteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  TasksDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MediaAnalysisTasks
+      AttributeDefinitions: 
+        - 
+          AttributeName: MediaUrl
+          AttributeType: S
+      KeySchema: 
+        - 
+          AttributeName: MediaUrl
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  TranscriptDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MediaAnalysisTranscript
+      AttributeDefinitions: 
+        - 
+          AttributeName: MediaUrl
+          AttributeType: S
+        - 
+          AttributeName: ResultId
+          AttributeType: S
+        - 
+          AttributeName: FragmentTimestamp
+          AttributeType: N
+      KeySchema: 
+        - 
+          AttributeName: MediaUrl
+          KeyType: HASH
+        - 
+          AttributeName: ResultId
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      LocalSecondaryIndexes: 
+        - 
+          IndexName: MediaAnalysisLSI
+          KeySchema: 
+            - 
+              AttributeName: MediaUrl
+              KeyType: HASH
+            - 
+              AttributeName: FragmentTimestamp
+              KeyType: RANGE
+          Projection: 
+            ProjectionType: ALL
+
+  # Rest API & Frontend
+
+  ApiGatewayInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated:
+                - cognito-identity.amazonaws.com
+            Action:
+              - sts:AssumeRoleWithWebIdentity
+
+  CognitoIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: MediaAnalysisIdentityPool
+      AllowUnauthenticatedIdentities: true
+
+  CognitoIdentityPoolRole:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref CognitoIdentityPool
+      Roles:
+        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
+        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
 
   RestApi:
     Type: AWS::Serverless::Api
@@ -747,71 +974,6 @@ Resources:
             name: Authorization
             in: header
             x-amazon-apigateway-authtype: awsSigv4
-
-  S3Endpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      RouteTableIds:
-        - !Ref PrivateRouteTable1
-        - !Ref PrivateRouteTable2
-        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
-      VpcId: !Ref VPC
-
-  SetupWebUI:
-    Type: Custom::Setup
-    Properties:
-      ServiceToken: !GetAtt LambdaSetup.Arn
-      Region: !Ref AWS::Region
-
-  TasksDynamoTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: MediaAnalysisTasks
-      AttributeDefinitions: 
-        - 
-          AttributeName: MediaUrl
-          AttributeType: S
-      KeySchema: 
-        - 
-          AttributeName: MediaUrl
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-
-  TranscriptDynamoTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: MediaAnalysisTranscript
-      AttributeDefinitions: 
-        - 
-          AttributeName: MediaUrl
-          AttributeType: S
-        - 
-          AttributeName: ResultId
-          AttributeType: S
-        - 
-          AttributeName: FragmentTimestamp
-          AttributeType: N
-      KeySchema: 
-        - 
-          AttributeName: MediaUrl
-          KeyType: HASH
-        - 
-          AttributeName: ResultId
-          KeyType: RANGE
-      BillingMode: PAY_PER_REQUEST
-      LocalSecondaryIndexes: 
-        - 
-          IndexName: MediaAnalysisLSI
-          KeySchema: 
-            - 
-              AttributeName: MediaUrl
-              KeyType: HASH
-            - 
-              AttributeName: FragmentTimestamp
-              KeyType: RANGE
-          Projection: 
-            ProjectionType: ALL
 
   WebUIBucket:
     Type: AWS::S3::Bucket

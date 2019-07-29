@@ -1,5 +1,6 @@
 const {
   API_GATEWAY,
+  BUILD_BUCKET,
   COGNITO_IDENTITY_POOL,
   FROM_BUCKET,
   MAX_TASKS,
@@ -7,20 +8,31 @@ const {
   TO_BUCKET
 } = process.env;
 
+const BACKEND_PATH = "build/backend.zip";
 const CONFIG_FILENAME = "settings.js";
 const FROM_PREFIX = "static/";
 
 module.exports = s3 => {
   const copyFile = params => s3.copyObject(params).promise();
-  const deleteFile = params => s3.deleteObject(params).promise();
   const listFiles = params => s3.listObjects(params).promise();
+  const listVersions = params => s3.listObjectVersions(params).promise();
+
+  const deleteFiles = (objects, bucket, withVersioning) => {
+    const mapper = withVersioning
+      ? ({ Key, VersionId }) => ({ Key, VersionId })
+      : ({ Key }) => ({ Key });
+
+    return s3
+      .deleteObjects({
+        Bucket: bucket,
+        Delete: { Objects: objects.map(mapper), Quiet: false }
+      })
+      .promise();
+  };
 
   return {
     copyFiles: () =>
-      listFiles({
-        Bucket: FROM_BUCKET,
-        Prefix: FROM_PREFIX
-      }).then(result =>
+      listFiles({ Bucket: FROM_BUCKET, Prefix: FROM_PREFIX }).then(result =>
         Promise.all(
           result.Contents.map(file =>
             copyFile({
@@ -34,18 +46,27 @@ module.exports = s3 => {
       ),
 
     removeFiles: () =>
-      listFiles({
-        Bucket: TO_BUCKET
-      }).then(result =>
-        Promise.all(
-          result.Contents.map(file => file.Key).map(file =>
-            deleteFile({
-              Bucket: TO_BUCKET,
-              Key: file
-            })
-          )
-        )
-      ),
+      Promise.all([
+        listFiles({ Bucket: TO_BUCKET }),
+        listVersions({ Bucket: BUILD_BUCKET })
+      ]).then(([uiObjects, buildObjects]) => {
+        const toDo = [];
+
+        if (uiObjects.Contents.length > 0)
+          toDo.push(deleteFiles(uiObjects.Contents, TO_BUCKET, false));
+
+        if (buildObjects.Versions.length > 0)
+          toDo.push(deleteFiles(buildObjects.Versions, BUILD_BUCKET, true));
+
+        return Promise.all(toDo);
+      }),
+
+    writeImage: () =>
+      copyFile({
+        Bucket: BUILD_BUCKET,
+        CopySource: `${FROM_BUCKET}/${BACKEND_PATH}`,
+        Key: BACKEND_PATH
+      }),
 
     writeSettings: () =>
       s3
