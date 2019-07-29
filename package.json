@@ -11,17 +11,19 @@
     "cfn-build": "npm run cfn-package && npm run lambda-inline",
     "cfn-ensure-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
     "cfn-package": "npm run cfn-ensure-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml",
-    "cfn-test": "npm run lambda-build && npm run cfn-build && npm run cfn-build && aws cloudformation deploy --template-file templates/template.yaml --stack-name MediaAnalysis --capabilities CAPABILITY_IAM",
+    "cfn-test": "cfn-lint templates/template.yaml",
+    "cfn-test-local": "npm run lambda-build && npm run cfn-build && npm run cfn-build && aws cloudformation deploy --template-file templates/template.yaml --stack-name MediaAnalysis --capabilities CAPABILITY_IAM",
     "deploy": "npm run build && npm run webui-deploy && npm run backend-deploy",
     "lambda-build": "cd src/backend/functions/setup && npm run build",
     "lambda-inline": "cd src/backend/functions/setup && npm run inline",
     "postinstall": "cd src/frontend && npm i && cd ../backend/functions/setup && npm i",
     "pre-deploy-test": "taskcat -c ci/taskcat.yml --verbose --exclude src --exclude docs --exclude taskcat_outputs",
     "start": "cd src/frontend && npm start",
-    "test": "cd src/frontend && npm t",
+    "test": "npm run cfn-test && npm run webui-test",
     "webui-build": "cd src/frontend && npm run build",
     "webui-deploy": "cd src/frontend/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
-    "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive"
+    "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive",
+    "webui-test": "cd src/frontend && npm t"
   },
   "repository": {
     "type": "git",
