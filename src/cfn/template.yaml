@@ -453,6 +453,8 @@ Resources:
 
   ECRRepository:
     Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: transcriber
 
   CodeBuildArtifactBucket:
     Type: AWS::S3::Bucket
@@ -638,6 +640,8 @@ Resources:
           AttributeName: MediaUrl
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   TranscriptDynamoTable:
     Type: AWS::DynamoDB::Table
@@ -995,6 +999,72 @@ Resources:
             name: Authorization
             in: header
             x-amazon-apigateway-authtype: awsSigv4
+
+  EcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  TransciberLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/transcriber
+      RetentionInDays: 7
+
+  TransciberTaskIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonTranscribeFullAccess
+
+  TransciberTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      TaskRoleArn: !Ref TransciberTaskIAMRole
+      ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
+      NetworkMode: awsvpc
+      Memory: '4096'
+      Cpu: '2048'
+      Family: transcriber
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: transcriber
+          Essential: true
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/transcriber:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref TransciberLogGroup
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref 'AWS::StackName'
+          Environment:
+            - Name: TRANSCRIPTS_DYNAMO_DB_TABLE
+              Value: !Ref TranscriptDynamoTable
+            - Name: TASKS_DYNAMO_DB_TABLE
+              Value: !Ref TasksDynamoTable
+            - Name: CLUSTER
+              Value: !Ref ECSCluster
+            - Name: AWS_REGION
+              Value: !Ref 'AWS::Region'
 
   WebUIBucket:
     Type: AWS::S3::Bucket
