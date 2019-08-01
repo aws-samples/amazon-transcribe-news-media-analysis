@@ -1049,7 +1049,7 @@ Resources:
       ContainerDefinitions:
         - Name: transcriber
           Essential: true
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/transcriber:latest
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
