@@ -5,6 +5,7 @@ const sinon = require('sinon');
 const index = rewire('../../lib');
 
 const waitingEvent = require('../fixtures/waiting_ddb_event.json');
+const terminatingEvent = require('../fixtures/terminating_ddb_event.json');
 
 describe('lib/index.js', () => {
 
@@ -55,7 +56,7 @@ describe('lib/index.js', () => {
                 })
             });
 
-            const putStub = sinon.stub().returns({promise: () => Promise.resolve('yay')});
+            const updateStub = sinon.stub().returns({promise: () => Promise.resolve('yay')});
 
             const expectedTaskParams = {
                 taskDefinition: 'transcriber',
@@ -82,16 +83,24 @@ describe('lib/index.js', () => {
                 }
             };
 
-            const expectedPutParams = {
+            const expectedUpdateParams = {
                 TableName: 'MediaAnalysisTasks',
-                Item: {
-                    MediaUrl: 'https://foo.bar/foo',
-                    TaskArn: 'taskArn',
-                    TaskStatus: 'INITIALIZING'
+                Key: {
+                    MediaUrl: 'https://foo.bar/foo'
+                },
+                AttributeUpdates: {
+                    TaskArn: {
+                        Action: 'PUT',
+                        Value: 'taskArn'
+                    },
+                    TaskStatus: {
+                        Action: 'PUT',
+                        Value: 'INITIALIZING'
+                    }
                 }
             };
 
-            const handler = index({runTask: runTaskStub}, {put: putStub}, {
+            const handler = index({runTask: runTaskStub}, {update: updateStub}, {
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
                 TASK_NAME: 'transcriber',
@@ -101,7 +110,44 @@ describe('lib/index.js', () => {
             return handler(waitingEvent, {})
                 .then(() => {
                     sinon.assert.calledWith(runTaskStub, expectedTaskParams);
-                    sinon.assert.calledWith(putStub, expectedPutParams);
+                    sinon.assert.calledWith(updateStub, expectedUpdateParams);
+                })
+        });
+
+        it('should stop transcription when TERMINATING state received', () => {
+            const stopTaskStub = sinon.stub().returns({
+                promise: () => Promise.resolve({
+                    task: {
+                        taskArn: 'taskArn'
+                    }
+                })
+            });
+
+            const deleteStub = sinon.stub().returns({promise: () => Promise.resolve('yay')});
+
+            const expectedTaskParams = {
+                task: 'taskArn',
+                cluster:'MyCluster'
+            };
+
+            const expectedDeleteParams = {
+                TableName: 'MediaAnalysisTasks',
+                Key: {
+                    MediaUrl: 'https://foo.bar/foo',
+                }
+            };
+
+            const handler = index({stopTask: stopTaskStub}, {delete: deleteStub}, {
+                TASKS_TABLE_NAME: 'MediaAnalysisTasks',
+                CLUSTER: 'MyCluster',
+                TASK_NAME: 'transcriber',
+                SUBNETS: 'subnet1, subnet2',
+            });
+
+            return handler(terminatingEvent, {})
+                .then(() => {
+                    sinon.assert.calledWith(stopTaskStub, expectedTaskParams);
+                    sinon.assert.calledWith(deleteStub, expectedDeleteParams);
                 })
         });
 

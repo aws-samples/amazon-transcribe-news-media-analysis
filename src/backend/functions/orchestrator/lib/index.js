@@ -15,15 +15,49 @@ const convertEnvVars = R.pipe(
     R.evolve({subnets: subnets => [...subnets.split(',').map(R.trim)]})
 );
 
+function createDeleteParams({mediaUrl, tasksTableName}) {
+   return {
+      TableName: tasksTableName,
+      Key: {
+         MediaUrl: mediaUrl
+      }
+   };
+}
+
+const stopTranscription = R.curry((ecs, {mediaUrl, cluster, task, tasksTableName}) => {
+   return ecs.stopTask({cluster, task})
+       .promise()
+       .then(() => ({mediaUrl, tasksTableName}));
+});
+
+function createUpdateParams({tasksTableName, mediaUrl, taskArn}) {
+   return {
+      TableName: tasksTableName,
+      Key: {
+         MediaUrl: mediaUrl
+      },
+      AttributeUpdates: {
+         TaskArn: {
+            Action: 'PUT',
+            Value: taskArn,
+         },
+         TaskStatus: {
+            Action: 'PUT',
+            Value: 'INITIALIZING'
+         }
+      }
+   }
+}
+
 // startTranscription :: AWS.ECS -> AWS.DDB -> Promise {k: v}
-const startTranscription = R.curry((ecs, ddb, options) => {
+const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, mediaUrl, subnets}) => {
    const params = {
-      taskDefinition: options.taskName,
-      cluster: options.cluster,
+      taskDefinition: taskName,
+      cluster: cluster,
       launchType: 'FARGATE',
       networkConfiguration: {
          awsvpcConfiguration: {
-            subnets: options.subnets,
+            subnets: subnets,
             assignPublicIp: 'DISABLED'
          }
       },
@@ -34,7 +68,7 @@ const startTranscription = R.curry((ecs, ddb, options) => {
                environment: [
                   {
                      name: 'MEDIA_URL',
-                     value: options.mediaUrl
+                     value: mediaUrl
                   }
                ]
             }
@@ -44,41 +78,48 @@ const startTranscription = R.curry((ecs, ddb, options) => {
 
    return ecs.runTask(params)
        .promise()
-       .then(({tasks}) => {
-         return ddb.put({
-            TableName: options.tasksTableName,
-            Item: {
-               MediaUrl: options.mediaUrl,
-               TaskArn: tasks[0].taskArn,
-               TaskStatus: 'INITIALIZING'
-            }
-         }).promise()
-   });
+       .then(({tasks}) => ({tasksTableName, mediaUrl, taskArn: tasks[0].taskArn}))
 });
 
 // waiting :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
-const waiting = R.curry((ecs, ddb, env, mediaUrl) =>
-    R.compose(startTranscription(ecs, ddb), R.mergeRight({mediaUrl}), convertEnvVars)(env)
+const waiting = R.curry((ecs, updateItem, env, {MediaUrl: mediaUrl}) =>
+    R.pipe(
+        convertEnvVars,
+        R.mergeRight({mediaUrl}),
+        startTranscription(ecs),
+        R.then(createUpdateParams),
+        R.then(updateItem)
+    )(env)
 );
 
-function terminating(ecs, ddb) {}
+// terminating :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
+const terminating = R.curry((ecs, deleteItem, env, {MediaUrl: mediaUrl, TaskArn: task}) =>
+   R.pipe(
+       convertEnvVars,
+       R.mergeRight({task, mediaUrl}),
+       stopTranscription(ecs),
+       R.then(createDeleteParams),
+       R.then(deleteItem)
+   )(env)
+);
 
 function error(ecs, ddb) {}
+
 
 // handler :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> ({k: v} -> {k: v} -> Promise {k: v})
 module.exports = (ecs, ddb, env) => {
    const handlers = {
-      WAITING: waiting(ecs, ddb),
+      WAITING: waiting(ecs, params => ddb.update(params).promise()),
       INITIALIZING: noop,
       PROCESSING: noop,
-      TERMINATING: terminating,
+      TERMINATING: terminating(ecs, params => ddb.delete(params).promise()),
       ERROR: error
    };
 
    return (event, context) => {
       const promises = R.map(record => {
-         const {TaskStatus, MediaUrl} = converter.unmarshall(R.path(['dynamodb', 'NewImage'], record));
-         return handlers[TaskStatus](env, MediaUrl);
+         const image = converter.unmarshall(R.path(['dynamodb', 'NewImage'], record));
+         return handlers[image.TaskStatus](env, image);
       }, event.Records);
 
       return Promise.all(promises);
