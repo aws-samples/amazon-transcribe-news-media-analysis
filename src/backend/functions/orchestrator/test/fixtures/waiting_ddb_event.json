@@ -1,0 +1,30 @@
+{
+  "Records": [
+    {
+      "eventID": "1",
+      "eventVersion": "1.0",
+      "dynamodb": {
+        "Keys": {
+          "MediaUrl": {
+            "S": "https://foo.bar/foo"
+          }
+        },
+        "NewImage": {
+          "MediaUrl": {
+            "S": "https://foo.bar/foo"
+          },
+          "TaskStatus": {
+            "S": "WAITING"
+          }
+        },
+        "StreamViewType": "NEW_AND_OLD_IMAGES",
+        "SequenceNumber": "111",
+        "SizeBytes": 26
+      },
+      "awsRegion": "eu-west-1",
+      "eventName": "INSERT",
+      "eventSourceARN": "arn:aws:dynamodb:eu-west-1:account-id:table/ExampleTableWithStream/stream/2015-06-27T00:48:05.899",
+      "eventSource": "aws:dynamodb"
+    }
+  ]
+}
