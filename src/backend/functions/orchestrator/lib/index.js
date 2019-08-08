@@ -85,18 +85,12 @@ function createUpdateParams({tasksTableName, mediaUrl, taskArn}) {
 
 // waiting :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
 const waiting = R.curry((ecs, updateItem) =>
-    handle(composeP(updateItem, createUpdateParams, startTranscription(ecs)), image => {
-       const {MediaUrl: mediaUrl} = image;
-       return {mediaUrl};
-    })
+    handle(composeP(updateItem, createUpdateParams, startTranscription(ecs)), ({MediaUrl: mediaUrl}) => ({mediaUrl}))
 );
 
 // terminating :: AWS.ECS -> {k: v} -> String -> Promise {k:v}
 const terminating = R.curry(ecs =>
-   handle(stopTranscription(ecs), image => {
-      const {TaskArn: task} = image;
-      return {task};
-   })
+   handle(stopTranscription(ecs), ({TaskArn: task}) => ({task}))
 );
 
 function createDeleteParams({mediaUrl, tasksTableName}) {
@@ -110,10 +104,7 @@ function createDeleteParams({mediaUrl, tasksTableName}) {
 
 // terminated :: ({k:v} -> Promise {k: v}) -> {k: v} -> String -> Promise {k:v}
 const terminated = R.curry(deleteItem =>
-    handle(o(deleteItem, createDeleteParams), image => {
-       const {MediaUrl: mediaUrl} = image;
-       return {mediaUrl};
-    })
+   handle(o(deleteItem, createDeleteParams), ({MediaUrl: mediaUrl}) => ({mediaUrl}))
 );
 
 function error(ecs, ddb) {}
