@@ -26,8 +26,8 @@ class LifecycleInfoPersister {
         writeTranscriptionStatus("PROCESSING");
     }
 
-    void transcriptionTerminating() {
-        writeTranscriptionStatus("TERMINATING");
+    void transcriptionTerminated() {
+        writeTranscriptionStatus("TERMINATED");
     }
 
     private void writeTranscriptionStatus(String status) {

@@ -2,8 +2,11 @@ const AWS = require('aws-sdk');
 const R = require('ramda');
 const converter = AWS.DynamoDB.Converter;
 
-// o is similar to R.pipe but is applied from right to left and only takes two arguments
+// o is similar to R.compose but takes exactly two arguments
 const {o} = R;
+
+// compose that works on promise returning functions
+const composeP = (...fns) => R.composeWith(R.then)(fns);
 
 // snakeToCamel :: String -> String
 const snakeToCamel = R.replace(/([_][a-z])/g, o(R.replace('_', ''), R.toUpper));
@@ -17,15 +20,6 @@ const convertEnvVars = R.pipe(
     R.fromPairs,
     R.evolve({subnets: subnets => [...subnets.split(',').map(R.trim)]})
 );
-
-function createDeleteParams({mediaUrl, tasksTableName}) {
-   return {
-      TableName: tasksTableName,
-      Key: {
-         MediaUrl: mediaUrl
-      }
-   };
-}
 
 const stopTranscription = R.curry((ecs, {mediaUrl, cluster, task, tasksTableName}) => {
    return ecs.stopTask({cluster, task})
@@ -65,6 +59,11 @@ const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, med
        .then(({tasks}) => ({tasksTableName, mediaUrl, taskArn: tasks[0].taskArn}))
 });
 
+// handle :: ({k: v} -> Promise {k:v}) -> ({k:v} -> {k: v}) -> {k: v} -> {k: v}
+const handle = R.curry((action, imageFn, env, image) =>
+    R.compose(action, R.mergeRight(imageFn(image)), convertEnvVars)(env)
+);
+
 function createUpdateParams({tasksTableName, mediaUrl, taskArn}) {
    return {
       TableName: tasksTableName,
@@ -84,30 +83,37 @@ function createUpdateParams({tasksTableName, mediaUrl, taskArn}) {
    }
 }
 
-// handle :: ({k: v} -> Promise {k:v}) -> ({k: v} -> Promise {k: v}) -> ({k:v} -> {k: v}) -> {k: v} -> {k: v}
-const handle = R.curry((ddbFn, transcriptionFn, imageFn, env, image) =>
-    R.pipe(
-        convertEnvVars,
-        R.mergeRight(imageFn(image)),
-        transcriptionFn,
-        R.then(ddbFn),
-    )(env)
-);
-
 // waiting :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
 const waiting = R.curry((ecs, updateItem) =>
-   handle(o(updateItem, createUpdateParams), startTranscription(ecs), image => {
-      const {MediaUrl: mediaUrl} = image;
-      return {mediaUrl};
+    handle(composeP(updateItem, createUpdateParams, startTranscription(ecs)), image => {
+       const {MediaUrl: mediaUrl} = image;
+       return {mediaUrl};
+    })
+);
+
+// terminating :: AWS.ECS -> {k: v} -> String -> Promise {k:v}
+const terminating = R.curry(ecs =>
+   handle(stopTranscription(ecs), image => {
+      const {TaskArn: task} = image;
+      return {task};
    })
 );
 
-// terminating :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
-const terminating = R.curry((ecs, deleteItem) =>
-   handle(o(deleteItem, createDeleteParams), stopTranscription(ecs), image => {
-      const {MediaUrl: mediaUrl, TaskArn: task} = image;
-      return {mediaUrl, task};
-   })
+function createDeleteParams({mediaUrl, tasksTableName}) {
+   return {
+      TableName: tasksTableName,
+      Key: {
+         MediaUrl: mediaUrl
+      }
+   };
+}
+
+// terminated :: ({k:v} -> Promise {k: v}) -> {k: v} -> String -> Promise {k:v}
+const terminated = R.curry(deleteItem =>
+    handle(o(deleteItem, createDeleteParams), image => {
+       const {MediaUrl: mediaUrl} = image;
+       return {mediaUrl};
+    })
 );
 
 function error(ecs, ddb) {}
@@ -119,16 +125,21 @@ module.exports = (ecs, ddb, env) => {
       WAITING: waiting(ecs, params => ddb.update(params).promise()),
       INITIALIZING: noop,
       PROCESSING: noop,
-      TERMINATING: terminating(ecs, params => ddb.delete(params).promise()),
+      TERMINATING: terminating(ecs),
+      TERMINATED: terminated(params => ddb.delete(params).promise()),
       ERROR: error
    };
 
    return (event, context) => {
       const promises = R.map(record => {
          const image = converter.unmarshall(R.path(['dynamodb', 'NewImage'], record));
-         return handlers[image.TaskStatus](env, image);
+         const handler = R.defaultTo(noop, handlers[image.TaskStatus]);
+         return handler(env, image);
       }, event.Records);
 
-      return Promise.all(promises);
+      return Promise.all(promises)
+          // this is temporary but important to remember that any uncaught DynamoDb stream errors block
+          // the queue for 24 hrs
+          .catch(console.log);
    };
 };

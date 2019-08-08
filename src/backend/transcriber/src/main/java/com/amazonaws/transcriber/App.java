@@ -67,7 +67,6 @@ public class App {
             promise.get();
         } catch (InterruptedException | ExecutionException ex) {
             logger.error("Transcription stopped...", ex);
-            lcp.transcriptionTerminating();
         }
     }
 
@@ -78,8 +77,8 @@ public class App {
             logger.info("Stopping ffmpeg encoding.");
             encoder.stop();
 
-            logger.info("Persisting lifecycle stage TERMINATING in DynamoDb...");
-            lcp.transcriptionTerminating();
+            logger.info("Persisting lifecycle stage TERMINATED in DynamoDb...");
+            lcp.transcriptionTerminated();
 
             //shutdown log4j2
             if( LogManager.getContext() instanceof LoggerContext ) {

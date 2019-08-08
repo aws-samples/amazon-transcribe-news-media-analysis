@@ -6,6 +6,7 @@ const index = rewire('../../lib');
 
 const waitingEvent = require('../fixtures/waiting_ddb_event.json');
 const terminatingEvent = require('../fixtures/terminating_ddb_event.json');
+const terminatedEvent = require('../fixtures/terminated_ddb_event.json');
 
 describe('lib/index.js', () => {
 
@@ -123,12 +124,24 @@ describe('lib/index.js', () => {
                 })
             });
 
-            const deleteStub = sinon.stub().returns({promise: () => Promise.resolve('yay')});
-
             const expectedTaskParams = {
                 task: 'taskArn',
                 cluster:'MyCluster'
             };
+
+            const handler = index({stopTask: stopTaskStub}, {}, {
+                TASKS_TABLE_NAME: 'MediaAnalysisTasks',
+                CLUSTER: 'MyCluster',
+                TASK_NAME: 'transcriber',
+                SUBNETS: 'subnet1, subnet2',
+            });
+
+            return handler(terminatingEvent, {})
+                .then(() => sinon.assert.calledWith(stopTaskStub, expectedTaskParams))
+        });
+
+        it('should remove DynamoDb item when TERMINATED state received', () => {
+            const deleteStub = sinon.stub().returns({promise: () => Promise.resolve('yay')});
 
             const expectedDeleteParams = {
                 TableName: 'MediaAnalysisTasks',
@@ -137,18 +150,15 @@ describe('lib/index.js', () => {
                 }
             };
 
-            const handler = index({stopTask: stopTaskStub}, {delete: deleteStub}, {
+            const handler = index({}, {delete: deleteStub}, {
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
             });
 
-            return handler(terminatingEvent, {})
-                .then(() => {
-                    sinon.assert.calledWith(stopTaskStub, expectedTaskParams);
-                    sinon.assert.calledWith(deleteStub, expectedDeleteParams);
-                })
+            return handler(terminatedEvent, {})
+                .then(() => sinon.assert.calledWith(deleteStub, expectedDeleteParams))
         });
 
     });
