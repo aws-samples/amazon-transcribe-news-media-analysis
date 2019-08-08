@@ -2,15 +2,18 @@ const AWS = require('aws-sdk');
 const R = require('ramda');
 const converter = AWS.DynamoDB.Converter;
 
+// o is similar to R.pipe but is applied from right to left and only takes two arguments
+const {o} = R;
+
 // snakeToCamel :: String -> String
-const snakeToCamel = R.replace(/([_][a-z])/g, R.compose(R.replace('_', ''), R.toUpper));
+const snakeToCamel = R.replace(/([_][a-z])/g, o(R.replace('_', ''), R.toUpper));
 
 function noop() {}
 
 // convertEnvVars :: {k: v} -> {k: v}
 const convertEnvVars = R.pipe(
     R.toPairs,
-    R.map(R.adjust(0, R.compose(snakeToCamel, R.toLower))),
+    R.map(R.adjust(0, o(snakeToCamel, R.toLower))),
     R.fromPairs,
     R.evolve({subnets: subnets => [...subnets.split(',').map(R.trim)]})
 );
@@ -29,25 +32,6 @@ const stopTranscription = R.curry((ecs, {mediaUrl, cluster, task, tasksTableName
        .promise()
        .then(() => ({mediaUrl, tasksTableName}));
 });
-
-function createUpdateParams({tasksTableName, mediaUrl, taskArn}) {
-   return {
-      TableName: tasksTableName,
-      Key: {
-         MediaUrl: mediaUrl
-      },
-      AttributeUpdates: {
-         TaskArn: {
-            Action: 'PUT',
-            Value: taskArn,
-         },
-         TaskStatus: {
-            Action: 'PUT',
-            Value: 'INITIALIZING'
-         }
-      }
-   }
-}
 
 // startTranscription :: AWS.ECS -> AWS.DDB -> Promise {k: v}
 const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, mediaUrl, subnets}) => {
@@ -81,26 +65,49 @@ const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, med
        .then(({tasks}) => ({tasksTableName, mediaUrl, taskArn: tasks[0].taskArn}))
 });
 
-// waiting :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
-const waiting = R.curry((ecs, updateItem, env, {MediaUrl: mediaUrl}) =>
+function createUpdateParams({tasksTableName, mediaUrl, taskArn}) {
+   return {
+      TableName: tasksTableName,
+      Key: {
+         MediaUrl: mediaUrl
+      },
+      AttributeUpdates: {
+         TaskArn: {
+            Action: 'PUT',
+            Value: taskArn,
+         },
+         TaskStatus: {
+            Action: 'PUT',
+            Value: 'INITIALIZING'
+         }
+      }
+   }
+}
+
+// handle :: ({k: v} -> Promise {k:v}) -> ({k: v} -> Promise {k: v}) -> ({k:v} -> {k: v}) -> {k: v} -> {k: v}
+const handle = R.curry((ddbFn, transcriptionFn, imageFn, env, image) =>
     R.pipe(
         convertEnvVars,
-        R.mergeRight({mediaUrl}),
-        startTranscription(ecs),
-        R.then(createUpdateParams),
-        R.then(updateItem)
+        R.mergeRight(imageFn(image)),
+        transcriptionFn,
+        R.then(ddbFn),
     )(env)
 );
 
+// waiting :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
+const waiting = R.curry((ecs, updateItem) =>
+   handle(o(updateItem, createUpdateParams), startTranscription(ecs), image => {
+      const {MediaUrl: mediaUrl} = image;
+      return {mediaUrl};
+   })
+);
+
 // terminating :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
-const terminating = R.curry((ecs, deleteItem, env, {MediaUrl: mediaUrl, TaskArn: task}) =>
-   R.pipe(
-       convertEnvVars,
-       R.mergeRight({task, mediaUrl}),
-       stopTranscription(ecs),
-       R.then(createDeleteParams),
-       R.then(deleteItem)
-   )(env)
+const terminating = R.curry((ecs, deleteItem) =>
+   handle(o(deleteItem, createDeleteParams), stopTranscription(ecs), image => {
+      const {MediaUrl: mediaUrl, TaskArn: task} = image;
+      return {mediaUrl, task};
+   })
 );
 
 function error(ecs, ddb) {}
