@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -39,6 +40,7 @@ public class App {
     private static final Logger logger = LogManager.getLogger(App.class);
 
     private static TranscriberConfig config = TranscriberConfig.getInstance();
+    private static String error;
 
     public static void main(String... args) {
         String input = config.mediaUrl();
@@ -53,7 +55,7 @@ public class App {
             config.mediaSampleRate(), config.vocabularyName().orElse(""));
         Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
 
-        addShutdownHook(transcriber, encoder, lcp);
+        addShutdownHook(lcp);
 
         InputStream mediaStream = encoder.start();
         try {
@@ -65,21 +67,30 @@ public class App {
             // storing the promises in an array and then using an infinite loop to keep the main
             // thread alive but as we only have one video per container this is not necessary
             promise.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            logger.error("Transcription stopped...", ex);
-            lcp.transcriptionTerminating();
+        } catch (InterruptedException ie) {
+            logger.info("Transcription thread stopped...");
+        } catch (ExecutionException ex) {
+            logger.error("Transcription errored...", ex);
+            error = ex.getMessage();
+        } finally {
+            logger.info("Stopping transcription.");
+            transcriber.stop();
+
+            logger.info("Stopping ffmpeg encoding.");
+            encoder.stop();
         }
     }
 
-    private static void addShutdownHook(Transcriber transcriber, Encoder encoder, LifecycleInfoPersister lcp) {
+    private static void addShutdownHook(LifecycleInfoPersister lcp) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("Stopping transcription.");
-            transcriber.stop();
-            logger.info("Stopping ffmpeg encoding.");
-            encoder.stop();
-
-            logger.info("Persisting lifecycle stage TERMINATING in DynamoDb...");
-            lcp.transcriptionTerminating();
+            if(error == null) {
+                logger.info("Persisting lifecycle stage TERMINATED in DynamoDb...");
+                lcp.transcriptionTerminated();
+            }
+            else {
+                logger.info("Persisting lifecycle stage ERROR in DynamoDb...");
+                lcp.transcriptionErrored(error);
+            }
 
             //shutdown log4j2
             if( LogManager.getContext() instanceof LoggerContext ) {

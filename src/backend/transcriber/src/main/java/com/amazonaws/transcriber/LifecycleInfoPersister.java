@@ -1,10 +1,10 @@
 package com.amazonaws.transcriber;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,30 +24,46 @@ class LifecycleInfoPersister {
     }
 
     void transcriptionBegun() {
-        writeTranscriptionStatus("PROCESSING");
+        writeTranscriptionStatus(ImmutableMap.of("TaskStatus", "PROCESSING"));
     }
 
-    void transcriptionTerminating() {
-        writeTranscriptionStatus("TERMINATING");
+    void transcriptionTerminated() {
+        writeTranscriptionStatus(ImmutableMap.of("TaskStatus", "TERMINATED"));
     }
 
-    private void writeTranscriptionStatus(String status) {
+    void transcriptionErrored(String error) {
+        writeTranscriptionStatus(ImmutableMap.of("TaskStatus", "ERROR", "ErrorMessage", error));
+    }
+
+    private void writeTranscriptionStatus(Map<String, String> items) {
         logger.debug("Writing task status to DynamoDb...");
-        PutItemRequest request = PutItemRequest.builder()
+        UpdateItemRequest request = UpdateItemRequest.builder()
             .tableName(this.ddbTableName)
-            .item(toDynamoDbItem(mediaUrl, status))
+            .key(toKey(mediaUrl))
+            .attributeUpdates(toAttributeUpdates(items))
             .build();
-        client.putItem(request);
-        logger.debug("Task " + status + " status written to DynamoDb...");
+        client.updateItem(request);
+        logger.debug("Task " + items.get("TaskStatus") + " status written to DynamoDb...");
     }
 
-    private Map<String, AttributeValue> toDynamoDbItem(String mediaUrl, String status) {
-        Map<String,AttributeValue> itemValues = new HashMap<>();
+    private Map<String, AttributeValueUpdate> toAttributeUpdates(Map<String, String> items) {
+        Map<String,AttributeValueUpdate> itemValues = new HashMap<>();
 
-        itemValues.put("MediaUrl", AttributeValue.builder().s(mediaUrl).build());
-        itemValues.put("TaskStatus", AttributeValue.builder().s(status).build());
+        items.forEach((k, v) -> {
+            itemValues.put(k, AttributeValueUpdate.builder()
+                .value(AttributeValue.builder().s(v).build())
+                .action(AttributeAction.PUT)
+                .build());
+        });
 
         return itemValues;
     }
 
+    private Map<String, AttributeValue> toKey(String key) {
+        Map<String,AttributeValue> keyValues = new HashMap<>();
+
+        keyValues.put("MediaUrl", AttributeValue.builder().s(key).build());
+
+        return keyValues;
+    }
 }
