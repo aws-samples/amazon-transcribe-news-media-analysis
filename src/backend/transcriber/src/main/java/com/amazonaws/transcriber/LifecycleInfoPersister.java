@@ -1,5 +1,6 @@
 package com.amazonaws.transcriber;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -23,31 +24,37 @@ class LifecycleInfoPersister {
     }
 
     void transcriptionBegun() {
-        writeTranscriptionStatus("PROCESSING");
+        writeTranscriptionStatus(ImmutableMap.of("TaskStatus", "PROCESSING"));
     }
 
     void transcriptionTerminated() {
-        writeTranscriptionStatus("TERMINATED");
+        writeTranscriptionStatus(ImmutableMap.of("TaskStatus", "TERMINATED"));
     }
 
-    private void writeTranscriptionStatus(String status) {
+    void transcriptionErrored(String error) {
+        writeTranscriptionStatus(ImmutableMap.of("TaskStatus", "ERROR", "ErrorMessage", error));
+    }
+
+    private void writeTranscriptionStatus(Map<String, String> items) {
         logger.debug("Writing task status to DynamoDb...");
         UpdateItemRequest request = UpdateItemRequest.builder()
             .tableName(this.ddbTableName)
             .key(toKey(mediaUrl))
-            .attributeUpdates(toAttributeUpdates(status))
+            .attributeUpdates(toAttributeUpdates(items))
             .build();
         client.updateItem(request);
-        logger.debug("Task " + status + " status written to DynamoDb...");
+        logger.debug("Task " + items.get("TaskStatus") + " status written to DynamoDb...");
     }
 
-    private Map<String, AttributeValueUpdate> toAttributeUpdates(String status) {
+    private Map<String, AttributeValueUpdate> toAttributeUpdates(Map<String, String> items) {
         Map<String,AttributeValueUpdate> itemValues = new HashMap<>();
 
-        itemValues.put("TaskStatus", AttributeValueUpdate.builder()
-            .value(AttributeValue.builder().s(status).build())
-            .action(AttributeAction.PUT)
-            .build());
+        items.forEach((k, v) -> {
+            itemValues.put(k, AttributeValueUpdate.builder()
+                .value(AttributeValue.builder().s(v).build())
+                .action(AttributeAction.PUT)
+                .build());
+        });
 
         return itemValues;
     }
