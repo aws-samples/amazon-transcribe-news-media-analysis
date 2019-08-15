@@ -3,18 +3,32 @@ language: node_js
 node_js: 
   - "10"
 
+# Install
 before_script:
   - pyenv global 3.7
   - python --version
   - pip3 install -r requirements.txt --user
-  - npm run build
 
-after_success:
+# Build and Test. Fails if version hasn't been incremented on a PR
+script:
+  - npm t
+  - npm run build
+  - if [ $TRAVIS_PULL_REQUEST == true ] && [ $TRAVIS_BRANCH != "master" ]; then
+      npm run tag
+    fi
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
-        npm run pre-deploy-test;
-        pip3 install -r requirements.txt --user;
-        npm run deploy;
-      fi
+      npm run pre-deploy-test;
+      npm run deploy
+    fi
+
+# Tag and Publish
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: npm run release
+  on:
+    branch: master
+    condition: tag IS NOT present AND type != pull_request
 
 notifications:
   email: false
