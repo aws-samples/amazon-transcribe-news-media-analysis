@@ -971,17 +971,22 @@ Resources:
                         }
                 requestTemplates:
                   application/json: !Sub |
+                    #set($inputRoot = $input.path('$'))
+                    #set($mediaTitle = $inputRoot.mediaTitle)
+                    #set($mediaDescription = $inputRoot.mediaDescription)
                     {
                       "TableName": "${TasksDynamoTable}",
                       "Item": {
+                        #if("$mediaDescription" != "")
                         "MediaDescription": {
-                          "S": $input.json('$.mediaDescription')
+                          "S": "$mediaDescription"
                         },
+                        #end
                         "MediaUrl": {
                           "S": "$util.urlDecode($input.params('mediaUrl'))"
                         },
                         "MediaTitle": {
-                          "S": $input.json('$.mediaTitle')
+                          "S": "$mediaTitle"
                         },
                         "TaskStatus": {
                           "S": "WAITING"
