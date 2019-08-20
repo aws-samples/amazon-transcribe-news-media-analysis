@@ -9,7 +9,7 @@
     "backend-deploy": "aws s3 cp src/backend/transcriber/backend.zip s3://media-analysis-demo/build/ --acl public-read",
     "build": "npm run webui-build && npm run lambda-build && npm run cfn-build && npm run backend-build",
     "cfn-build": "npm run cfn-package && npm run lambda-inline",
-    "cfn-deploy": "aws s3 cp ./templates/template.yaml s3://media-analysis-demo/ --acl public-read",
+    "cfn-deploy": "npm run zip && aws s3 cp ./$npm_package_version.zip s3://$CFN_BUCKET/$npm_package_name/$npm_package_version/$npm_package_name.zip",
     "cfn-ensure-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
     "cfn-package": "npm run cfn-ensure-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml",
     "cfn-test": "cfn-lint templates/template.yaml",
