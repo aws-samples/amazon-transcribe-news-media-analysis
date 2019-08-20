@@ -11,8 +11,8 @@ before_script:
 
 # Build and Test. Fails if version hasn't been incremented on a PR
 script:
-  - npm t
   - npm run build
+  - npm t
   - if [ $TRAVIS_PULL_REQUEST == true ] && [ $TRAVIS_BRANCH != "master" ]; then
       npm run tag
     fi
