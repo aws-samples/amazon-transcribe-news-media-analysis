@@ -14,11 +14,12 @@ script:
   - npm run build
   - npm t
   - if [ $TRAVIS_PULL_REQUEST == true ] && [ $TRAVIS_BRANCH != "master" ]; then
-      npm run tag
+      npm run tag;
     fi
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
       npm run pre-deploy-test;
-      npm run deploy
+      pip3 install -r requirements.txt --user;
+      npm run deploy;
     fi
 
 # Tag and Publish
