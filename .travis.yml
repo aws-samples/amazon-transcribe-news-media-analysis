@@ -9,27 +9,28 @@ before_script:
   - python --version
   - pip3 install -r requirements.txt --user
 
-# Build and Test. Fails if version hasn't been incremented on a PR
+# Build and Test. Fails if package.json version hasn't been incremented on a PR
 script:
   - npm run build
   - npm t
   - if [ $TRAVIS_PULL_REQUEST == true ] && [ $TRAVIS_BRANCH != "master" ]; then
       npm run tag;
     fi
-  - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
-      npm run pre-deploy-test;
-      pip3 install -r requirements.txt --user;
-      npm run deploy;
-    fi
 
 # Tag and Publish
+before_deploy:
+  - npm run pre-deploy-test
+
 deploy:
 - provider: script
   skip_cleanup: true
-  script: npm run release
+  script: npm run deploy
   on:
     branch: master
-    condition: tag IS NOT present AND type != pull_request
+    condition: type != pull_request
+
+after_deploy:
+  - npm run release
 
 notifications:
   email: false
