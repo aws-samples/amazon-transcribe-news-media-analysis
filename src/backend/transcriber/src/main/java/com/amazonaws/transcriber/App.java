@@ -51,13 +51,14 @@ public class App {
             logger.info("YouTube input is %s", input);
         }
 
+        Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
+        InputStream mediaStream = encoder.start();
+
         Transcriber transcriber = new Transcriber(input, LanguageCode.EN_US, MediaEncoding.PCM,
             config.mediaSampleRate(), config.vocabularyName().orElse(""));
-        Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
 
         addShutdownHook(lcp);
 
-        InputStream mediaStream = encoder.start();
         try {
             CompletableFuture<Void> promise = transcriber.start(mediaStream);
 
