@@ -20,6 +20,9 @@ script:
 # Tag and Publish
 before_deploy:
   - npm run pre-deploy-test
+  - export TRAVIS_TAG=${TRAVIS_TAG:-$(npm run echo-version)}
+  - npm run tag
+  - npm run zip
 
 deploy:
 - provider: script
@@ -28,9 +31,11 @@ deploy:
   on:
     branch: master
     condition: type != pull_request
-
-after_deploy:
-  - npm run release
+- provider: releases
+  api_key: 
+    secure: $GH_TOKEN
+  file: $TRAVIS_TAG.zip
+  skip_cleanup: true
 
 notifications:
   email: false
