@@ -33,9 +33,12 @@ deploy:
     condition: type != pull_request
 - provider: releases
   api_key: 
-    secure: $GH_TOKEN
+    secure: "LB/+JhC9x829J6wDT6ipkGq7KGk5gu/awxoP35mGb/xzcf37OoC3zsMm8ZxIIJYT05w6HdHHQtGpqyvfv+kkCbrCuaV5cm2SV+nS3vJL354Etayk3KrX/xAgLrOt4PZ/5/AqtfcJPbMh1X2kpdb+Utqahhto9a/lu8auUvHpEbdCJbU3BmyvnQYQB5BwwpyU0UOixO5VnPoQDbDK11lgDrfyWsj5xu/23kapCZLzJQuUIOYQCxp2CKiMAgcO2aMdIFTbdEvfgRfBNLGPnRmrP/QvbgJ1rj/auALm3EoQ+UKDLR81FnAESaIg4dJqOqMT6lOwq1CsnnqsEPlRUUzEiRKjp3e+SZkEbisb3jwmyLPogru4NH3BnD7wXJiorR3KGuOpUQVrTWrvH/9LJV015BWJ1uiZlzE44Fs1sx16I7iR14rC+wBFAEJRXDr+eg4JeBZBuqmIRTCz2c7XVKxuL+YdVtX7jgGv3Mtk4LFf2ZLSYM3CZZ9ly/erCoJ5LVobasS5EO2AvaWifRPzwzSOPr0jFYpno7+E6f3AZ9zxW8mIqRO8qOqoAaVoPsR6D2e9xYsCsDVX/DlIzyHBH7Au2YqBdbrCJuEzgZ5AJrZtvxNVsYY08xrJjC2ZlokIPuaC8Ymd9NzEBzQXYvERd1omNSZEfUz/yQkkGSH3EtXMlwg="
   file: $TRAVIS_TAG.zip
   skip_cleanup: true
+  on:
+    branch: master
+    condition: type != pull_request
 
 notifications:
   email: false
