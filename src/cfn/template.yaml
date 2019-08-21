@@ -29,7 +29,7 @@ Parameters:
     Default: 10
 
   RetryThreshold:
-    Description: Number of times to retrie transcription if an error is encountered
+    Description: Number of times to retry transcription if an error is encountered
     Type: String
     Default: 3
 

@@ -11,25 +11,34 @@ const composeP = (...fns) => R.composeWith(R.then)(fns);
 // snakeToCamel :: String -> String
 const snakeToCamel = R.replace(/([_][a-z])/g, o(R.replace('_', ''), R.toUpper));
 
+// pascalToCamel :: String -> String
+const pascalToCamel = R.replace(/^\w/g, R.toLower);
+
+// keyConverter :: (String -> String) -> {k: v} -> {k: v}
+const keyConverter = f => R.compose(R.fromPairs, R.map(R.adjust(0, f)), R.toPairs);
+
 function noop() {}
 
 // convertEnvVars :: {k: v} -> {k: v}
 const convertEnvVars = R.pipe(
-    R.toPairs,
-    R.map(R.adjust(0, o(snakeToCamel, R.toLower))),
-    R.fromPairs,
+    keyConverter(o(snakeToCamel, R.toLower)),
     R.evolve({subnets: subnets => [...subnets.split(',').map(R.trim)]})
 );
 
-// handle :: ({k: v} -> Promise {k:v}) -> ({k:v} -> {k: v}) -> {k: v} -> {k: v} -> Promise {k: v}
-const handle = R.curry((action, imageFn, env, image) =>
-    R.compose(action, R.mergeRight(imageFn(image)), convertEnvVars)(env)
-);
+// convertImage :: {k: v} -> {k: v}
+const convertImage = keyConverter(pascalToCamel);
 
-const stopTranscription = R.curry((ecs, {mediaUrl, cluster, task, tasksTableName}) => {
-   return ecs.stopTask({cluster, task})
+// stopTranscription :: AWS.ECS -> {k: v} -> Promise {k: v}
+const stopTranscription = R.curry((ecs, {mediaUrl, cluster, taskArn, tasksTableName}) => {
+   return ecs.stopTask({cluster, task: taskArn})
        .promise()
        .then(() => ({mediaUrl, tasksTableName}));
+});
+
+// createEnrichedError :: {k: v} -> Error -> Error
+const createEnrichedError = R.curry((params, err) => {
+   console.log('Error: ' + err);
+   return R.reduce((e, [k, v]) => (e[k] = v, e), R.clone(err), R.toPairs(params))
 });
 
 // startTranscription :: AWS.ECS -> {k: v} -> Promise {k: v}
@@ -64,8 +73,9 @@ const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, med
        .then(({tasks}) => ({tasksTableName, mediaUrl, taskArn: tasks[0].taskArn}))
 });
 
-const createUpdateParams = R.curry(({tasksTableName, mediaUrl, taskArn}) => {
-   return {
+// startTranscription :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
+const updateWaiting = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) => {
+   const params = {
       TableName: tasksTableName,
       Key: {
          MediaUrl: mediaUrl
@@ -76,18 +86,20 @@ const createUpdateParams = R.curry(({tasksTableName, mediaUrl, taskArn}) => {
          ':task': taskArn
       },
       ReturnValues: 'ALL_NEW'
-   }
+   };
+
+   return updateItem(params)
+       .catch(err => {
+          throw createEnrichedError({tasksTableName, mediaUrl, taskArn}, err)
+       })
+       .then(({Attributes}) => ({...Attributes, tasksTableName}))
 });
 
 // waiting :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
-const waiting = R.curry((ecs, updateItem) =>
-    handle(composeP(updateItem, createUpdateParams, startTranscription(ecs)), ({MediaUrl: mediaUrl}) => ({mediaUrl}))
-);
+const waiting = R.curry((ecs, updateItem) => composeP(updateWaiting(updateItem), startTranscription(ecs)));
 
-// terminating :: AWS.ECS -> {k: v} -> String -> Promise {k:v}
-const terminating = R.curry(ecs =>
-   handle(stopTranscription(ecs), ({TaskArn: task}) => ({task}))
-);
+// terminating :: AWS.ECS -> {k: v} -> Promise {k:v}
+const terminating = stopTranscription;
 
 function createDeleteParams({mediaUrl, tasksTableName}) {
    return {
@@ -99,10 +111,9 @@ function createDeleteParams({mediaUrl, tasksTableName}) {
 }
 
 // terminated :: ({k:v} -> Promise {k: v}) -> {k: v} -> {k: v} -> Promise {k:v}
-const terminated = R.curry(deleteItem =>
-   handle(o(deleteItem, createDeleteParams), ({MediaUrl: mediaUrl}) => ({mediaUrl}))
-);
+const terminated = R.curry(deleteItem => o(deleteItem, createDeleteParams));
 
+// errorUpdate :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
 const errorUpdate = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) => {
    const params = {
       TableName: tasksTableName,
@@ -122,11 +133,11 @@ const errorUpdate = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) =>
        .then(({Attributes}) => ({...Attributes, tasksTableName}))
 });
 
-const unrecoverableError = R.curry((updateItem, {tasksTableName, MediaUrl}) => {
+const unrecoverableError = R.curry((updateItem, {tasksTableName, mediaUrl}) => {
    const params = {
       TableName: tasksTableName,
       Key: {
-         MediaUrl: MediaUrl
+         MediaUrl: mediaUrl
       },
       UpdateExpression: 'SET TaskStatus = :status',
       ExpressionAttributeValues: {
@@ -138,12 +149,10 @@ const unrecoverableError = R.curry((updateItem, {tasksTableName, MediaUrl}) => {
    return updateItem(params);
 });
 
-// error :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> {k: v} -> Promise {k:v}
-const error = R.curry((ecs, updateItem) =>
-    handle(composeP(errorUpdate(updateItem), startTranscription(ecs)), ({MediaUrl: mediaUrl}) => ({mediaUrl}))
-);
+// error :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> Promise {k:v}
+const error = R.curry((ecs, updateItem) => composeP(errorUpdate(updateItem), startTranscription(ecs)));
 
-// handler :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> ({k: v} -> {k: v} -> Promise {k: v})
+// handler :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> ({k: v} -> Promise {k: v})
 module.exports = (ecs, ddb, env) => {
    const update = params => ddb.update(params).promise();
 
@@ -157,44 +166,44 @@ module.exports = (ecs, ddb, env) => {
       UNRECOVERABLE_ERROR: noop
    };
 
+   const normalisedEnv = convertEnvVars(env);
+
    return event => {
 
       const promises = R.map(record => {
          const image = converter.unmarshall(R.path(['dynamodb', 'NewImage'], record));
-         const {MediaUrl, Retries, TaskStatus} = image;
-         const {TASKS_TABLE_NAME: tasksTableName} = env;
 
-         console.log('Status: ' + TaskStatus);
+         const params = R.mergeRight(normalisedEnv, convertImage(image));
 
-         if(R.defaultTo(0, Retries) > parseInt(env.RETRY_THRESHOLD)) {
+         const {mediaUrl, retries, taskStatus, tasksTableName, retryThreshold} = params;
+
+         console.log('Status: ' + taskStatus);
+
+         if(R.defaultTo(0, retries) > parseInt(retryThreshold)) {
             console.log('Error threshold exceeded');
-            return unrecoverableError(update, {MediaUrl, tasksTableName});
+            return unrecoverableError(update, {mediaUrl, tasksTableName});
          }
 
-         const handler = R.defaultTo(noop, handlers[TaskStatus]);
-         return handler(env, image).catch(err => {
-            const e = new Error(err.message);
-            e.mediaUrl = MediaUrl;
-            e.tasksTableName = tasksTableName;
-            return e;
-         });
+         const handler = R.defaultTo(noop, handlers[taskStatus]);
+         return handler(params)
+             .catch(createEnrichedError({tasksTableName, mediaUrl}));
       }, event.Records);
 
       return Promise.all(promises)
           .then(R.filter(x => x.name === 'Error'))
-          .then(R.forEach(err => update({
-             TableName: err.tasksTableName,
-             Key: {
-                MediaUrl: err.mediaUrl
-             },
-             UpdateExpression: 'SET TaskStatus = :status',
-             ExpressionAttributeValues: {
-                ':status':  'ERROR'
-             },
-             ReturnValues: 'ALL_NEW'
-          })))
+          .then(R.map(err => {
+             const {mediaUrl, tasksTableName} = err;
+
+             const stop = err.taskArn != null ?
+                 stopTranscription(ecs, {mediaUrl, cluster: normalisedEnv.cluster, taskArn: err.taskArn, tasksTableName}) :
+                 Promise.resolve();
+
+             return stop.then(() => unrecoverableError(update, {tasksTableName, mediaUrl}));
+          }))
+          .then(promises => Promise.all(promises))
           // this is temporary but important to remember that any uncaught DynamoDb stream errors block
-          // the queue for 24 hrs
+          // the queue for 24 hrs. We will allow the error handling promises here to crash the lambda
+          // because something has really gone wrong in this case.
           .catch(x => console.log(x));
    };
 };

@@ -23,6 +23,16 @@ describe('lib/index.js', () => {
         });
     });
 
+    describe('pascalToCamel', () => {
+        const snakeToCamel = index.__get__('pascalToCamel');
+
+        it('should convert pascal case to camel case', () => {
+            assert.equal(snakeToCamel(''), '');
+            assert.equal(snakeToCamel('not'), 'not');
+            assert.equal(snakeToCamel('MyMethod'), 'myMethod');
+        });
+    });
+
     describe('convertEnvVars', () => {
         const convertEnvVars = index.__get__('convertEnvVars');
 
@@ -32,13 +42,15 @@ describe('lib/index.js', () => {
                 CLUSTER: 'MyCluster',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
+                RETRY_THRESHOLD: '3'
             };
 
             const expected = {
                 tasksTableName: 'MediaAnalysisTasks',
                 cluster: 'MyCluster',
                 taskName: 'transcriber',
-                subnets: ['subnet1', 'subnet2']
+                subnets: ['subnet1', 'subnet2'],
+                retryThreshold: '3',
             };
 
             const actual = convertEnvVars(input);
@@ -104,18 +116,19 @@ describe('lib/index.js', () => {
                 CLUSTER: 'MyCluster',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
+                RETRY_THRESHOLD: '3'
             });
 
             return handler(waitingEvent, {})
-                .then(() => {
+                .then(xs => {
                     sinon.assert.calledWith(runTaskStub, expectedTaskParams);
                     sinon.assert.calledWith(updateStub, expectedUpdateParams);
                 })
         });
 
-        it('should enter ERROR state if start of transcription fails', () => {
+        it('should enter UNRECOVERABLE_ERROR state if start of transcription fails', () => {
             const runTaskStub = sinon.stub().returns({
-                promise: () => Promise.reject('blah')
+                promise: () => Promise.reject(new Error('boo'))
             });
 
             const updateStub = sinon.stub().returns({promise: () => Promise.resolve('yay')});
@@ -127,7 +140,7 @@ describe('lib/index.js', () => {
                 },
                 UpdateExpression: 'SET TaskStatus = :status',
                 ExpressionAttributeValues: {
-                    ':status':  'ERROR'
+                    ':status':  'UNRECOVERABLE_ERROR'
                 },
                 ReturnValues: 'ALL_NEW'
             };
@@ -135,7 +148,7 @@ describe('lib/index.js', () => {
             const handler = index({runTask: runTaskStub}, {update: updateStub}, {
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
-                RETRY_THRESHOLD: 3,
+                RETRY_THRESHOLD: '3',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
             });
@@ -143,6 +156,60 @@ describe('lib/index.js', () => {
             return handler(waitingEvent, {})
                 .then(() => {
                     sinon.assert.calledWith(updateStub, expectedUpdateParams);
+                })
+        });
+
+        it('should enter UNRECOVERABLE_ERROR state if write to Dynamo fails after transcription begins', () => {
+            const runTaskStub = sinon.stub().returns({
+                promise: () => Promise.resolve({
+                    tasks: [{
+                        taskArn: 'taskArn'
+                    }]
+                })
+            });
+
+            const stopTaskStub = sinon.stub().returns({
+                promise: () => Promise.resolve({
+                    task: {
+                        taskArn: 'taskArn'
+                    }
+                })
+            });
+
+            const updateStub = sinon.stub();
+
+            updateStub.onCall(0).returns({promise: () => Promise.reject(new Error('boo'))});
+            updateStub.onCall(1).returns({promise: () => Promise.resolve('yay')});
+
+            const expectedUpdateParams = {
+                TableName: 'MediaAnalysisTasks',
+                Key: {
+                    MediaUrl: 'https://foo.bar/foo'
+                },
+                UpdateExpression: 'SET TaskStatus = :status',
+                ExpressionAttributeValues: {
+                    ':status':  'UNRECOVERABLE_ERROR'
+                },
+                ReturnValues: 'ALL_NEW'
+            };
+
+            const expectedStopTaskParams = {
+                task: 'taskArn',
+                cluster: 'MyCluster'
+            };
+
+            const handler = index({runTask: runTaskStub, stopTask: stopTaskStub}, {update: updateStub}, {
+                TASKS_TABLE_NAME: 'MediaAnalysisTasks',
+                CLUSTER: 'MyCluster',
+                RETRY_THRESHOLD: '3',
+                TASK_NAME: 'transcriber',
+                SUBNETS: 'subnet1, subnet2',
+            });
+
+            return handler(waitingEvent)
+                .then(() => {
+                    sinon.assert.calledWith(updateStub, expectedUpdateParams);
+                    sinon.assert.calledWith(stopTaskStub, expectedStopTaskParams);
                 })
         });
 
@@ -199,7 +266,7 @@ describe('lib/index.js', () => {
             const handler = index({runTask: runTaskStub}, {update: updateStub}, {
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
-                RETRY_THRESHOLD: 3,
+                RETRY_THRESHOLD: '3',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
             });
@@ -247,7 +314,7 @@ describe('lib/index.js', () => {
             const handler = index({runTask: runTaskStub}, {update: updateStub}, {
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
-                RETRY_THRESHOLD: 3,
+                RETRY_THRESHOLD: '3',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
             });
@@ -265,7 +332,7 @@ describe('lib/index.js', () => {
                 })
             });
 
-            const expectedTaskParams = {
+            const expectedStopTaskParams = {
                 task: 'taskArn',
                 cluster:'MyCluster'
             };
@@ -279,7 +346,7 @@ describe('lib/index.js', () => {
             });
 
             return handler(terminatingEvent, {})
-                .then(() => sinon.assert.calledWith(stopTaskStub, expectedTaskParams))
+                .then(() => sinon.assert.calledWith(stopTaskStub, expectedStopTaskParams))
         });
 
         it('should remove DynamoDb item when TERMINATED state received', () => {
