@@ -16,6 +16,7 @@
     "cfn-test-local": "npm run lambda-build && npm run cfn-build && npm run cfn-build && aws cloudformation deploy --template-file templates/template.yaml --stack-name MediaAnalysis --capabilities CAPABILITY_IAM",
     "deploy": "npm run webui-deploy && npm run backend-deploy && npm run cfn-deploy",
     "echo-version": "echo v$npm_package_version",
+    "lambda-build-orchestrator": "cd src/backend/functions/orchestrator && npm run build",
     "lambda-build": "cd src/backend/functions/setup && npm run build",
     "lambda-inline": "cd src/backend/functions/setup && npm run inline",
     "postinstall": "cd src/frontend && npm i && cd ../backend/functions/setup && npm i",
@@ -27,7 +28,7 @@
     "webui-deploy": "cd src/frontend/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
     "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive",
     "webui-test": "cd src/frontend && npm t",
-    "zip": "git archive HEAD -o v$npm_package_version.zip"
+    "zip": "zip -r v$npm_package_version.zip . -x @ci/exclude.lst"
   },
   "repository": {
     "type": "git",

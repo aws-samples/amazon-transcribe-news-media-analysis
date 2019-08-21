@@ -1,0 +1,4 @@
+*venv*
+*.md
+src/backend/functions/setup/*
+src/frontend/*
