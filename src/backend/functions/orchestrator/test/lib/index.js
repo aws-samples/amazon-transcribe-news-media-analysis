@@ -24,12 +24,12 @@ describe('lib/index.js', () => {
     });
 
     describe('pascalToCamel', () => {
-        const snakeToCamel = index.__get__('pascalToCamel');
+        const pascalToCamel = index.__get__('pascalToCamel');
 
         it('should convert pascal case to camel case', () => {
-            assert.equal(snakeToCamel(''), '');
-            assert.equal(snakeToCamel('not'), 'not');
-            assert.equal(snakeToCamel('MyMethod'), 'myMethod');
+            assert.equal(pascalToCamel(''), '');
+            assert.equal(pascalToCamel('not'), 'not');
+            assert.equal(pascalToCamel('MyMethod'), 'myMethod');
         });
     });
 
