@@ -9,6 +9,7 @@ const errorEvent = require('../fixtures/error_ddb_event.json');
 const retryEvent = require('../fixtures/retry_ddb_event.json');
 const terminatingEvent = require('../fixtures/terminating_ddb_event.json');
 const terminatedEvent = require('../fixtures/terminated_ddb_event.json');
+const deleteEvent = require('../fixtures/dynamo_delete.json');
 
 describe('lib/index.js', () => {
 
@@ -369,6 +370,19 @@ describe('lib/index.js', () => {
 
             return handler(terminatedEvent, {})
                 .then(() => sinon.assert.calledWith(deleteStub, expectedDeleteParams))
+        });
+
+        it('should handle delete event', () => {
+            const handler = index({}, {}, {
+                TASKS_TABLE_NAME: 'MediaAnalysisTasks',
+                CLUSTER: 'MyCluster',
+                RETRY_THRESHOLD: 3,
+                TASK_NAME: 'transcriber',
+                SUBNETS: 'subnet1, subnet2',
+            });
+
+            return handler(deleteEvent, {})
+                .then(xs => assert.deepEqual(xs, []));
         });
 
     });

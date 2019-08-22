@@ -12,7 +12,7 @@
     "videojs-youtube": "2.6.0"
   },
   "scripts": {
-    "start": "export HTTPS=true && react-scripts start",
+    "start": "export HTTPS=false && react-scripts start",
     "build": "react-scripts build",
     "test": "export CI=true && react-scripts test",
     "eject": "react-scripts eject"

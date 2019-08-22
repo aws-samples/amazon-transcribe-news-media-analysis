@@ -17,7 +17,9 @@ const pascalToCamel = R.replace(/^\w/g, R.toLower);
 // keyConverter :: (String -> String) -> {k: v} -> {k: v}
 const keyConverter = f => R.compose(R.fromPairs, R.map(R.adjust(0, f)), R.toPairs);
 
-function noop() {}
+function noop() {
+   return Promise.resolve({});
+}
 
 // convertEnvVars :: {k: v} -> {k: v}
 const convertEnvVars = R.pipe(
@@ -174,6 +176,8 @@ module.exports = (ecs, ddb, env) => {
 
       const promises = R.map(record => {
          const image = converter.unmarshall(R.path(['dynamodb', 'NewImage'], record));
+
+         if(R.isEmpty(image)) return Promise.resolve({}); // this means we've a delete event
 
          const params = R.mergeRight(normalisedEnv, convertImage(image));
 
