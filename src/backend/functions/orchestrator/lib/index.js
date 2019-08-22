@@ -37,7 +37,6 @@ const stopTranscription = R.curry((ecs, {mediaUrl, cluster, taskArn, tasksTableN
 
 // createEnrichedError :: {k: v} -> Error -> Error
 const createEnrichedError = R.curry((params, err) => {
-   console.log('Error: ' + err);
    return R.reduce((e, [k, v]) => (e[k] = v, e), R.clone(err), R.toPairs(params))
 });
 
@@ -75,6 +74,8 @@ const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, med
 
 // startTranscription :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
 const updateWaiting = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) => {
+   const status = 'INITIALIZING';
+
    const params = {
       TableName: tasksTableName,
       Key: {
@@ -82,7 +83,7 @@ const updateWaiting = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) 
       },
       UpdateExpression: 'SET TaskStatus = :status, TaskArn = :task',
       ExpressionAttributeValues: {
-         ':status':  'INITIALIZING',
+         ':status':  status,
          ':task': taskArn
       },
       ReturnValues: 'ALL_NEW'
@@ -90,7 +91,8 @@ const updateWaiting = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) 
 
    return updateItem(params)
        .catch(err => {
-          throw createEnrichedError({tasksTableName, mediaUrl, taskArn}, err)
+          console.log(`Updating DynamoDb with ${status} state has failed`);
+          throw createEnrichedError({taskArn}, err)
        })
        .then(({Attributes}) => ({...Attributes, tasksTableName}))
 });
