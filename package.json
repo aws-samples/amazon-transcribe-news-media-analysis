@@ -27,7 +27,7 @@
     "webui-deploy": "cd src/frontend/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
     "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive",
     "webui-test": "cd src/frontend && npm t",
-    "zip": "zip -r v$npm_package_version.zip . -x @ci/exclude.lst"
+    "zip": "zip -r v$npm_package_version.zip -@ < ci/include.lst"
   },
   "repository": {
     "type": "git",
