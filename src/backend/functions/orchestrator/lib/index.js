@@ -185,11 +185,11 @@ module.exports = (ecs, ddb, env) => {
 
          const params = R.mergeRight(normalisedEnv, convertImage(image));
 
-         const {mediaUrl, retries = 0, taskStatus, tasksTableName, retryThreshold = '3'} = params;
+         const {mediaUrl, retries = 0, taskStatus, tasksTableName, retryThreshold} = params;
 
          console.log('Status: ' + taskStatus);
 
-         if(isUnrecoverableError(retries, parseInt(retryThreshold), taskStatus)) {
+         if(isUnrecoverableError(retries, R.defaultTo(3, parseInt(retryThreshold)), taskStatus)) {
             console.log('Error threshold exceeded');
             return unrecoverableError(update, {mediaUrl, tasksTableName});
          }
@@ -206,7 +206,7 @@ module.exports = (ecs, ddb, env) => {
 
              const stop = err.taskArn != null ?
                  stopTranscription(ecs, {mediaUrl, cluster: normalisedEnv.cluster, taskArn: err.taskArn, tasksTableName}) :
-                 Promise.resolve();
+                 Promise.resolve({});
 
              return stop.then(() => unrecoverableError(update, {tasksTableName, mediaUrl}));
           }))

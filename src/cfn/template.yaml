@@ -30,7 +30,7 @@ Parameters:
 
   RetryThreshold:
     Description: Number of times to retry transcription if an error is encountered
-    Type: String
+    Type: Number
     Default: 3
 
   PrivateSubnetIpBlocks:
