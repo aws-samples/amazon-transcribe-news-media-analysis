@@ -156,6 +156,10 @@ const unrecoverableError = R.curry((updateItem, {tasksTableName, mediaUrl}) => {
 // error :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> Promise {k:v}
 const error = R.curry((ecs, updateItem) => composeP(errorUpdate(updateItem), startTranscription(ecs)));
 
+function isUnrecoverableError(retries, retryThreshold, taskStatus) {
+   return retries > retryThreshold && !R.includes(taskStatus, ['TERMINATING', 'TERMINATED']);
+}
+
 // handler :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> ({k: v} -> Promise {k: v})
 module.exports = (ecs, ddb, env) => {
    const update = params => ddb.update(params).promise();
@@ -181,11 +185,11 @@ module.exports = (ecs, ddb, env) => {
 
          const params = R.mergeRight(normalisedEnv, convertImage(image));
 
-         const {mediaUrl, retries, taskStatus, tasksTableName, retryThreshold} = params;
+         const {mediaUrl, retries = 0, taskStatus, tasksTableName, retryThreshold = '3'} = params;
 
          console.log('Status: ' + taskStatus);
 
-         if(R.defaultTo(0, retries) > parseInt(retryThreshold)) {
+         if(isUnrecoverableError(retries, parseInt(retryThreshold), taskStatus)) {
             console.log('Error threshold exceeded');
             return unrecoverableError(update, {mediaUrl, tasksTableName});
          }

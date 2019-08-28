@@ -52,14 +52,14 @@ public class App {
         }
 
         Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
-        InputStream mediaStream = encoder.start();
-
         Transcriber transcriber = new Transcriber(input, LanguageCode.EN_US, MediaEncoding.PCM,
             config.mediaSampleRate(), config.vocabularyName().orElse(""));
 
-        addShutdownHook(lcp);
-
         try {
+            InputStream mediaStream = encoder.start();
+
+            addShutdownHook(lcp);
+
             CompletableFuture<Void> promise = transcriber.start(mediaStream);
 
             logger.info("Persisting lifecycle stage PROCESSING in DynamoDb...");
@@ -68,6 +68,9 @@ public class App {
             // storing the promises in an array and then using an infinite loop to keep the main
             // thread alive but as we only have one video per container this is not necessary
             promise.get();
+        } catch (IOException ioe) {
+            logger.error("There was an error starting ffmpeg...", ioe);
+            error = ioe.getMessage();
         } catch (InterruptedException ie) {
             logger.info("Transcription thread stopped...");
         } catch (ExecutionException ex) {
@@ -78,7 +81,12 @@ public class App {
             transcriber.stop();
 
             logger.info("Stopping ffmpeg encoding.");
-            encoder.stop();
+            try {
+                encoder.stop();
+            } catch (IOException ioe) {
+                logger.error("The ffmpeg process errored.", ioe);
+                error = ioe.getMessage();
+            }
         }
     }
 
