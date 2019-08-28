@@ -28,6 +28,11 @@ Parameters:
     Type: Number
     Default: 10
 
+  RetryThreshold:
+    Description: Number of times to retry transcription if an error is encountered
+    Type: Number
+    Default: 3
+
   PrivateSubnetIpBlocks:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: CommaDelimitedList
@@ -708,12 +713,35 @@ Resources:
         authenticated: !GetAtt ApiGatewayInvokeRole.Arn
         unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
 
+  ApiGatewayCloudWatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  Account:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchRole.Arn
+
   RestApi:
     Type: AWS::Serverless::Api
     Name: MediaAnalysisAPI
     Properties:
       StageName: PROD
       EndpointConfiguration: REGIONAL
+      MethodSettings:
+        - LoggingLevel: INFO
+          ResourcePath: "/*"
+          HttpMethod: "*"
       DefinitionBody:
         swagger: 2.0
         info:
@@ -1004,6 +1032,8 @@ Resources:
             name: Authorization
             in: header
             x-amazon-apigateway-authtype: awsSigv4
+    DependsOn:
+      - Account
 
   EcsTaskExecutionRole:
     Type: AWS::IAM::Role
@@ -1064,6 +1094,8 @@ Resources:
           Environment:
             - Name: TRANSCRIPTS_DYNAMO_DB_TABLE
               Value: !Ref TranscriptDynamoTable
+            - Name: RETRY_THRESHOLD
+              Value: !Ref RetryThreshold
             - Name: TASKS_DYNAMO_DB_TABLE
               Value: !Ref TasksDynamoTable
             - Name: CLUSTER

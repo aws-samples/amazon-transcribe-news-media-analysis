@@ -5,7 +5,7 @@
   "description": "Orchestrator lambda for managing transcription tasks",
   "main": "lib/index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --recursive"
   },
   "dependencies": {
     "aws-sdk": "2.369.0",

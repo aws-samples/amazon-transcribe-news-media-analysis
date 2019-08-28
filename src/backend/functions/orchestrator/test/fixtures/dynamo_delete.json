@@ -1,0 +1,30 @@
+{
+  "Records": [
+    {
+      "eventID": "3",
+      "eventVersion": "1.0",
+      "dynamodb": {
+        "Keys": {
+          "MediaUrl": {
+            "S": "https://foo.bar/baz"
+          }
+        },
+        "SizeBytes": 38,
+        "SequenceNumber": "333",
+        "OldImage": {
+          "MediaUrl": {
+            "S": "https://foo.bar/baz"
+          },
+          "TaskStatus": {
+            "S": "ERROR"
+          }
+        },
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "awsRegion": "eu-west-1",
+      "eventName": "REMOVE",
+      "eventSourceARN": "arn:aws:dynamodb:eu-west-1:account-id:table/ExampleTableWithStream/stream/2015-06-27T00:48:05.899",
+      "eventSource": "aws:dynamodb"
+    }
+  ]
+}

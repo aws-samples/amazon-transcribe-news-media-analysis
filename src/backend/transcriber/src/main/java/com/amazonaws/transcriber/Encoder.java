@@ -38,8 +38,7 @@ public class Encoder {
     private Process process;
     private BufferedWriter stdinWriter;
     private Thread stderrReaderThread;
-
-    
+    private String error;
 
     Encoder(String path, String inputFormat, String input) {
         this.path = path;
@@ -62,7 +61,7 @@ public class Encoder {
         }
     }
     
-    InputStream start() {
+    InputStream start() throws IOException {
         List<String> args = new ArrayList<>(Arrays.asList(
             path,
             "-hide_banner",
@@ -83,45 +82,48 @@ public class Encoder {
         logger.info("Starting with %s", args);
         ProcessBuilder processBuilder = new ProcessBuilder(args);
 
-        try {
-            process = processBuilder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            stderrReaderThread = new Thread(() -> {
-                Thread.currentThread().setName(logger.getName());
-                reader.lines().forEach(line -> {
-                    if (printFilter.matcher(line).matches()) {
-                        logger.info(line);
-                    }
-                });
-                logger.info("Completed");
+
+        process = processBuilder.start();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        stderrReaderThread = new Thread(() -> {
+            Thread.currentThread().setName(logger.getName());
+            this.error = reader.lines().reduce("", (err, line) -> {
+                if (printFilter.matcher(line).matches()) {
+                    logger.info(line);
+                }
+                err += line;
+                return err;
             });
-            stderrReaderThread.start();
-            stdinWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-            return process.getInputStream();
-        } catch (IOException e) {
-            logger.error("Error starting", e);
-            return null;
-        }
+            logger.info("Completed with errors.");
+        });
+        stderrReaderThread.start();
+        stdinWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+        return process.getInputStream();
     }
 
-    void stop() {
-        if ((process != null) && process.isAlive()) {
-            try {
-                stdinWriter.write("q");
-                stdinWriter.flush();
-                process.wait(1000);
-            } catch (InterruptedException ex) {
-                logger.info("ffmpeg thread for {} has been interrupted.", input);
-            } catch (IOException e) {
-                logger.error("Error quiting ffmpeg process", e);
-            } finally {
-                if ((process != null) && process.isAlive()) {
-                    process.destroy();
+    void stop() throws IOException {
+        if ((process != null)) {
+            if(process.isAlive()) {
+                try {
+                    stdinWriter.write("q");
+                    stdinWriter.flush();
+                    process.wait(1000);
+                } catch (InterruptedException ex) {
+                    logger.info("ffmpeg thread for {} has been interrupted.", input);
+                } catch (IOException e) {
+                    logger.error("Error quiting ffmpeg process", e);
+                } finally {
+                    if ((process != null) && process.isAlive()) {
+                        process.destroy();
+                    }
+                    if (stderrReaderThread != null) {
+                        stderrReaderThread.interrupt();
+                        stderrReaderThread = null;
+                    }
                 }
-                if (stderrReaderThread != null) {
-                    stderrReaderThread.interrupt();
-                    stderrReaderThread = null;
-                }
+            }
+            if(process.exitValue() != 0) {
+                throw new IOException(this.error);
             }
         }
     }

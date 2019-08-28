@@ -15,6 +15,7 @@ describe('index.js', () => {
                 AWS_REGION: 'eu-west-1',
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
+                RETRY_THRESHOLD: '3',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
             }, { clear: true })
@@ -29,6 +30,7 @@ describe('index.js', () => {
             sinon.assert.calledWith(handlerStub, index.__get__('ecs'), index.__get__('ddb'), {
                 AWS_REGION: 'eu-west-1',
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
+                RETRY_THRESHOLD: '3',
                 CLUSTER: 'MyCluster',
                 TASK_NAME: 'transcriber',
                 SUBNETS: 'subnet1, subnet2',
