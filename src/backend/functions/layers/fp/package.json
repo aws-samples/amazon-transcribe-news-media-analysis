@@ -1,0 +1,11 @@
+{
+  "name": "layers",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AWS Lambda layer containing functional programming libs",
+  "main": "index.js",
+  "scripts": {},
+  "dependencies": {
+    "ramda": "0.26.1"
+  }
+}

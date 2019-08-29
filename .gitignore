@@ -1,6 +1,7 @@
 .DS_Store
 .idea
 .python-version
+.vscode
 
 backend.zip
 dist
@@ -8,6 +9,7 @@ manual-test.js
 node_modules
 npm-debug.log*
 package-lock.json
+venv
 
 src/backend/transcriber/.classpath
 src/backend/transcriber/.factorypath

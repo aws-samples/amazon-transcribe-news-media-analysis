@@ -410,39 +410,21 @@ Resources:
       FunctionName: MediaAnalysisSetup
       Runtime: nodejs8.10
       Handler: index.handler
-      CodeUri: ../backend/functions/setup/
+      CodeUri: ../backend/functions/setup/dist/
+      Layers:
+        - !Ref AWSSDKLayer
       Description: Custom Lambda resource for the Media Analysis Cloudformation Stack
       MemorySize: 128
       Timeout: 30
-      Role: !GetAtt CustomResourceRole.Arn
-
-  CustomResourceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
       Policies:
-        - PolicyName: MediaAnalysis-setup-resources
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action:
-                - 's3:*'
-                - 'ecr:*'
-              Resource: '*'
-        - PolicyName: MediaAnalysis-cloudwatch-logs
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action: 'logs:*'
-              Resource: 'arn:aws:logs:*:*:*'
+        - AWSLambdaBasicExecutionRole
+        - Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+              - 's3:*'
+              - 'ecr:*'
+            Resource: '*'
 
   SetupWebUIAndDockerImage:
     Type: Custom::Setup
@@ -452,6 +434,57 @@ Resources:
       Region: !Ref AWS::Region
 
   # Computing & Containers
+
+  AWSSDKLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: MediaAnalysisAWSSDK
+      Description: Latest confirmed compatible AWS SDK
+      ContentUri: ../backend/functions/layers/aws_sdk/
+      CompatibleRuntimes:
+        - nodejs8.10
+        - nodejs10.x
+
+  FPLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: MediaAnalysisFP
+      Description: Layer containing functional programming libs
+      ContentUri: ../backend/functions/layers/fp/
+      CompatibleRuntimes:
+        - nodejs8.10
+        - nodejs10.x
+
+  Orchestrator:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs10.x
+      CodeUri: ../backend/functions/orchestrator/dist/
+      Timeout: 10
+      MemorySize: 512
+      Layers:
+        - !Ref AWSSDKLayer
+        - !Ref FPLayer
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonECS_FullAccess
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaInvocation-DynamoDB
+      Environment:
+        Variables:
+          CLUSTER: !Ref ECSCluster
+          RETRY_THRESHOLD: !Ref RetryThreshold
+          SUBNETS: !Sub ${PrivateSubnet1},${PrivateSubnet2},${PrivateSubnet3}
+          TASKS_TABLE_NAME: !Ref TasksDynamoTable
+          TASK_NAME: transcriber
+      Events:
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt TasksDynamoTable.StreamArn
+            BatchSize: 100
+            StartingPosition: TRIM_HORIZON
 
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -652,6 +685,8 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: MediaAnalysisTranscript
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       AttributeDefinitions: 
         - 
           AttributeName: MediaUrl
