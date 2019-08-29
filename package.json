@@ -8,7 +8,7 @@
     "backend-package": "cd src/backend/transcriber/ && zip backend.zip Dockerfile target/transcriber-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/log4j2.xml",
     "backend-deploy": "aws s3 cp src/backend/transcriber/backend.zip s3://media-analysis-demo/build/ --acl public-read",
     "build": "npm run webui-build && npm run lambda-build && npm run cfn-build && npm run backend-build",
-    "cfn-build": "npm run cfn-package && npm run lambda-inline",
+    "cfn-build": "npm run cfn-package",
     "cfn-deploy": "aws s3 cp ./templates/template.yaml s3://media-analysis-demo/ --acl public-read",
     "cfn-ensure-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
     "cfn-package": "npm run cfn-ensure-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml",
