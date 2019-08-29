@@ -5,7 +5,7 @@
   "description": "Setup the static S3 files",
   "main": "index.js",
   "scripts": {
-    "build": "rsync -avz . dist --exclude 'node_modules' --exclude 'test'"
+    "build": "rm -rf dist && rsync -avz . dist/ --exclude 'node_modules' --exclude 'test'"
   },
   "dependencies": {
     "aws-sdk": "2.369.0"
