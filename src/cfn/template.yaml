@@ -516,8 +516,7 @@ Resources:
             pre_build:
               commands:
                 - $(aws ecr get-login --no-include-email)
-                - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
-                - IMAGE_URI="${REPOSITORY_URI}:${TAG}"
+                - IMAGE_URI="${REPOSITORY_URI}"
             build:
               commands:
                 - docker build --tag "$IMAGE_URI" .
