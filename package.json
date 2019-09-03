@@ -1,6 +1,6 @@
 {
   "name": "amazon-transcribe-news-media-analysis",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "backend": "npm run backend-build && npm run backend-deploy",
@@ -9,12 +9,13 @@
     "backend-deploy": "aws s3 cp src/backend/transcriber/backend.zip s3://media-analysis-demo/build/ --acl public-read",
     "build": "npm run webui-build && npm run lambda-build && npm run cfn-build && npm run backend-build",
     "cfn-build": "npm run cfn-package",
-    "cfn-deploy": "aws s3 cp ./templates/template.yaml s3://media-analysis-demo/ --acl public-read",
+    "cfn-deploy": "npm run zip && aws s3 cp ./v$npm_package_version.zip s3://$CFN_BUCKET/$npm_package_name/v$npm_package_version/$npm_package_name.zip",
     "cfn-ensure-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
     "cfn-package": "npm run cfn-ensure-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml",
     "cfn-test": "cfn-lint templates/template.yaml",
     "cfn-test-local": "npm run lambda-build && npm run cfn-build && npm run cfn-build && aws cloudformation deploy --template-file templates/template.yaml --stack-name MediaAnalysis --capabilities CAPABILITY_IAM",
     "deploy": "npm run webui-deploy && npm run backend-deploy && npm run cfn-deploy",
+    "echo-version": "echo v$npm_package_version",
     "lambda-build": "npm run lambda-build-layers && npm run lambda-build-orchestrator && npm run lambda-build-setup",
     "lambda-build-layers": "cd src/backend/functions/layers && npm run build",
     "lambda-build-orchestrator": "cd src/backend/functions/orchestrator && npm run build",
@@ -22,11 +23,13 @@
     "postinstall": "cd src/frontend && npm i && cd ../backend/functions/setup && npm i",
     "pre-deploy-test": "taskcat -c ci/taskcat.yml --verbose --exclude src --exclude docs --exclude taskcat_outputs",
     "start": "cd src/frontend && npm start",
+    "tag": "git tag v$npm_package_version",
     "test": "npm run cfn-test && npm run webui-test",
     "webui-build": "cd src/frontend && npm run build",
     "webui-deploy": "cd src/frontend/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
     "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive",
-    "webui-test": "cd src/frontend && npm t"
+    "webui-test": "cd src/frontend && npm t",
+    "zip": "zip -r v$npm_package_version.zip -@ < ci/include.lst"
   },
   "repository": {
     "type": "git",
