@@ -20,7 +20,7 @@ script:
 # Tag and Publish
 before_deploy:
   # - npm run pre-deploy-test
-  - export VERSION=${TRAVIS_TAG:-$(npm run echo-version)}
+  - export VERSION=${TRAVIS_TAG:-$(npm run echo-version --silent)}
   - if [ -z "$TRAVIS_TAG" ]; then npm run tag; fi
   - npm run zip
 
