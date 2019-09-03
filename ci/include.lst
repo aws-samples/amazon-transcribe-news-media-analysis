@@ -1,3 +1,6 @@
+src/backend/functions/layers/
+src/backend/functions/orchestrator/dist
+src/backend/functions/setup/dist
 templates
 package.json
 README.md

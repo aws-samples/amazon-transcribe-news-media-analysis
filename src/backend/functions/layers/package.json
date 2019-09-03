@@ -5,6 +5,8 @@
   "description": "Shared AWS Lambda layers",
   "main": "index.js",
   "scripts": {
-    "build": "(cd aws_sdk && npm i --prefix nodejs .) && (cd fp && npm i --prefix nodejs .)"
+    "build": "npm run install-nodejs && npm run clean-nodejs",
+    "clean-nodejs": "rm -rf aws_sdk/nodejs/node_modules/aws-lambda-sdk-layer && rm -rf fp/nodejs/node_modules/aws-lambda-fp-layer",
+    "install-nodejs": "(cd aws_sdk && npm i --no-package-lock --prefix nodejs .) && (cd fp && npm i --prefix nodejs .)"
   }
 }
