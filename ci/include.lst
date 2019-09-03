@@ -1,7 +1,5 @@
+backend
 cfn-publish.config
 package.json
-src/backend/functions/layers/
-src/backend/functions/orchestrator/dist
-src/backend/functions/setup/dist
 templates
 README.md
