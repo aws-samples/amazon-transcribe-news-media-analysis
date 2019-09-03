@@ -3,6 +3,7 @@
 .python-version
 .vscode
 
+backend
 backend.zip
 dist
 manual-test.js
