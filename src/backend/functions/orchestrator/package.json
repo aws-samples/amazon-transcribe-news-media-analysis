@@ -5,6 +5,7 @@
   "description": "Orchestrator lambda for managing transcription tasks",
   "main": "lib/index.js",
   "scripts": {
+    "build": "rm -rf dist && rsync -avz . dist/ --exclude 'node_modules' --exclude 'test'",
     "test": "mocha --recursive"
   },
   "dependencies": {

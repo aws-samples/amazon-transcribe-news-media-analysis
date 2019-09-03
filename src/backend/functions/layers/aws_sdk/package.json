@@ -1,0 +1,11 @@
+{
+  "name": "aws-lambda-sdk-layer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AWS Lambda layer containing the AWS SDK",
+  "main": "index.js",
+  "scripts": {},
+  "dependencies": {
+    "aws-sdk": "2.369.0"
+  }
+}

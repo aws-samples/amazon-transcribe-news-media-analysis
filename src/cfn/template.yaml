@@ -3,18 +3,6 @@ Description: Amazon Transcribe News Media Analysis (uksb-1potrt4cg)
 Transform: AWS::Serverless-2016-10-31
 
 Globals:
-  Function:
-    Environment:
-      Variables:
-        API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
-        BUILD_BUCKET: !Ref CodeBuildArtifactBucket
-        COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
-        FROM_BUCKET: media-analysis-demo
-        MAX_TASKS: !Ref MaxTasksCapacity
-        REGION: !Ref AWS::Region
-        REPOSITORY: !Ref ECRRepository
-        TO_BUCKET: !Ref WebUIBucket
-        VPC_ID: !Ref VPC
   Api:
     Cors:
       AllowMethods: "'*'"
@@ -48,6 +36,11 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+
+  TaskName:
+    Description: Name for the transcriber task family in ECS
+    Type: String
+    Default: transcriber
 
 Outputs:
   url:
@@ -410,39 +403,31 @@ Resources:
       FunctionName: MediaAnalysisSetup
       Runtime: nodejs8.10
       Handler: index.handler
-      CodeUri: ../backend/functions/setup/
+      CodeUri: ../backend/functions/setup/dist/
+      Layers:
+        - !Ref AWSSDKLayer
       Description: Custom Lambda resource for the Media Analysis Cloudformation Stack
       MemorySize: 128
+      Environment:
+        Variables:
+          API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
+          BUILD_BUCKET: !Ref CodeBuildArtifactBucket
+          COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
+          FROM_BUCKET: media-analysis-demo
+          MAX_TASKS: !Ref MaxTasksCapacity
+          REGION: !Ref AWS::Region
+          REPOSITORY: !Ref ECRRepository
+          TO_BUCKET: !Ref WebUIBucket
       Timeout: 30
-      Role: !GetAtt CustomResourceRole.Arn
-
-  CustomResourceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
       Policies:
-        - PolicyName: MediaAnalysis-setup-resources
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action:
-                - 's3:*'
-                - 'ecr:*'
-              Resource: '*'
-        - PolicyName: MediaAnalysis-cloudwatch-logs
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action: 'logs:*'
-              Resource: 'arn:aws:logs:*:*:*'
+        - AWSLambdaBasicExecutionRole
+        - Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+              - 's3:*'
+              - 'ecr:*'
+            Resource: '*'
 
   SetupWebUIAndDockerImage:
     Type: Custom::Setup
@@ -453,13 +438,64 @@ Resources:
 
   # Computing & Containers
 
+  AWSSDKLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: MediaAnalysisAWSSDK
+      Description: Latest confirmed compatible AWS SDK
+      ContentUri: ../backend/functions/layers/aws_sdk/
+      CompatibleRuntimes:
+        - nodejs8.10
+        - nodejs10.x
+
+  FPLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: MediaAnalysisFP
+      Description: Layer containing functional programming libs
+      ContentUri: ../backend/functions/layers/fp/
+      CompatibleRuntimes:
+        - nodejs8.10
+        - nodejs10.x
+
+  Orchestrator:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs10.x
+      CodeUri: ../backend/functions/orchestrator/dist/
+      Timeout: 60
+      MemorySize: 512
+      Layers:
+        - !Ref AWSSDKLayer
+        - !Ref FPLayer
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonECS_FullAccess
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaInvocation-DynamoDB
+      Environment:
+        Variables:
+          CLUSTER: !Ref ECSCluster
+          RETRY_THRESHOLD: !Ref RetryThreshold
+          SUBNETS: !Sub ${PrivateSubnet1},${PrivateSubnet2},${PrivateSubnet3}
+          TASKS_TABLE_NAME: !Ref TasksDynamoTable
+          TASK_NAME: !Ref TaskName
+      Events:
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt TasksDynamoTable.StreamArn
+            BatchSize: 100
+            StartingPosition: TRIM_HORIZON
+
   ECSCluster:
     Type: AWS::ECS::Cluster
 
   ECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: transcriber
+      RepositoryName: !Ref TaskName
 
   CodeBuildArtifactBucket:
     Type: AWS::S3::Bucket
@@ -651,6 +687,8 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: MediaAnalysisTranscript
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       AttributeDefinitions: 
         - 
           AttributeName: MediaUrl
@@ -1052,7 +1090,7 @@ Resources:
   TransciberLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/transcriber
+      LogGroupName: !Sub /ecs/${TaskName}
       RetentionInDays: 7
 
   TransciberTaskIAMRole:
@@ -1077,11 +1115,11 @@ Resources:
       NetworkMode: awsvpc
       Memory: '4096'
       Cpu: '2048'
-      Family: transcriber
+      Family: !Ref TaskName
       RequiresCompatibilities:
         - FARGATE
       ContainerDefinitions:
-        - Name: transcriber
+        - Name: !Ref TaskName
           Essential: true
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
           LogConfiguration:
