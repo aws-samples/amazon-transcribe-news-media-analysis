@@ -811,7 +811,6 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -876,7 +875,6 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -929,7 +927,6 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -982,7 +979,6 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         {
@@ -1033,7 +1029,6 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         {
