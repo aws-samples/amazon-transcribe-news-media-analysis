@@ -5,7 +5,7 @@ Transform: AWS::Serverless-2016-10-31
 Globals:
   Api:
     Cors:
-      AllowMethods: "'*'"
+      AllowMethods: "'GET,POST,OPTIONS,DELETE,PUT'"
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       AllowOrigin: "'*'"
 
@@ -811,6 +811,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -875,6 +876,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -927,6 +929,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -979,6 +982,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         {
@@ -1029,6 +1033,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS,DELETE,PUT'"
                     responseTemplates:
                       application/json: |
                         {
