@@ -44,14 +44,15 @@ public class App {
 
     public static void main(String... args) {
         String input = config.mediaUrl();
-        LifecycleInfoPersister lcp  = new LifecycleInfoPersister(input);
-        logger.info("Input is {}", input);
+        String resolved = input;
+        LifecycleInfoPersister lcp  = new LifecycleInfoPersister(resolved);
+        logger.info("Input is {}", resolved);
         if (input.startsWith("https://www.youtube.com/")) {
-            input = getYouTubeUrl(config.youtubeDlPath(), input);
-            logger.info("YouTube input is %s", input);
+            resolved = getYouTubeUrl(config.youtubeDlPath(), input);
+            logger.info("YouTube input is %s", resolved);
         }
 
-        Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", input);
+        Encoder encoder = new Encoder(config.ffmpegPath(), "s16le", resolved);
         Transcriber transcriber = new Transcriber(input, LanguageCode.EN_US, MediaEncoding.PCM,
             config.mediaSampleRate(), config.vocabularyName().orElse(""));
 
