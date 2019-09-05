@@ -478,7 +478,10 @@ Resources:
         Variables:
           CLUSTER: !Ref ECSCluster
           RETRY_THRESHOLD: !Ref RetryThreshold
-          SUBNETS: !If [ HasThreeAZs, !Sub ${PrivateSubnet1},${PrivateSubnet2},${PrivateSubnet3}, !Sub ${PrivateSubnet1},${PrivateSubnet2} ]
+          SUBNETS: !If
+            - HasThreeAZs
+            - !Sub ${PrivateSubnet1},${PrivateSubnet2},${PrivateSubnet3}
+            - !Sub ${PrivateSubnet1},${PrivateSubnet2}
           TASKS_TABLE_NAME: !Ref TasksDynamoTable
           TASK_NAME: !Ref TaskName
       Events:
