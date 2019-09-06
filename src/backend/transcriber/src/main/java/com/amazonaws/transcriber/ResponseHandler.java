@@ -21,7 +21,7 @@ import com.google.common.base.Strings;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+
 import software.amazon.awssdk.services.transcribestreaming.model.*;
 
 import java.time.Duration;

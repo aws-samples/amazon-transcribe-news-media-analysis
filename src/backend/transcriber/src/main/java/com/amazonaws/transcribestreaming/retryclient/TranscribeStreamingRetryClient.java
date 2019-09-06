@@ -17,6 +17,8 @@
 
 package com.amazonaws.transcribestreaming.retryclient;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reactivestreams.Publisher;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.signer.Aws4Signer;
@@ -41,6 +43,8 @@ import java.util.concurrent.CompletableFuture;
  * error cases, such as flaky network connections.
  */
 public class TranscribeStreamingRetryClient {
+
+    private static final Logger logger = LogManager.getLogger(TranscribeStreamingRetryClient.class);
 
     private static final int DEFAULT_MAX_RETRIES = 10;
     private static final int DEFAULT_MAX_SLEEP_TIME_MILLS = 100;
@@ -147,7 +151,7 @@ public class TranscribeStreamingRetryClient {
             if (e != null) {
 
                 if (retryAttempt <= maxRetries && isExceptionRetriable(e)) {
-                    System.err.println("Retry attempt:" + (retryAttempt + 1) );
+                    logger.error("Retry attempt:" + (retryAttempt + 1) );
 
                     try {
                         Thread.sleep(sleepTime);
