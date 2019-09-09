@@ -4,7 +4,6 @@
   "scripts": {
     "backend": "npm run backend-package && npm run backend-deploy",
     "backend-package": "cd src/backend/transcriber/ && zip -r ../../../backend/transcriber.zip Dockerfile pom.xml src/",
-    "backend-deploy": "aws s3 cp src/backend/transcriber/backend.zip s3://media-analysis-demo/build/ --acl public-read",
     "build": "npm run webui-build && npm run lambda-build && npm run cfn-build && npm run backend-package && npm run webui-package",
     "cfn-build": "npm run cfn-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml && npm run cfn-lambdas-dist && npm run cfn-copy-lambdas",
     "cfn-copy-lambdas": "npm run cfn-copy-lambdas-aws_sdk && npm run cfn-copy-lambdas-fp && npm run cfn-copy-lambdas-orchestrator && npm run cfn-copy-lambdas-setup",
@@ -12,7 +11,6 @@
     "cfn-copy-lambdas-fp": "cp -R src/backend/functions/layers/fp ./backend/functions/layers",
     "cfn-copy-lambdas-orchestrator": "cp -R src/backend/functions/orchestrator/dist ./backend/functions/orchestrator/",
     "cfn-copy-lambdas-setup": "cp -R src/backend/functions/setup/dist ./backend/functions/setup/",
-    "cfn-deploy": "npm run zip && aws s3 cp ./`npm run echo-version --silent`.zip s3://$CFN_BUCKET/$npm_package_name/v`npm run echo-version --silent`/$npm_package_name.zip",
     "cfn-dist": "if [ ! -d './templates' ]; then mkdir templates; fi",
     "cfn-lambdas-dist": "npm run cfn-lambdas-dist-aws_sdk && npm run cfn-lambdas-dist-fp && npm run cfn-lambdas-dist-orchestrator && npm run cfn-lambdas-dist-setup",
     "cfn-lambdas-dist-aws_sdk": "if [ ! -d './backend/functions/layers/aws_sdk' ]; then mkdir -p backend/functions/layers/aws_sdk; fi",
@@ -21,8 +19,8 @@
     "cfn-lambdas-dist-setup": "if [ ! -d './backend/functions/setup/' ]; then mkdir -p backend/functions/setup/; fi",
     "cfn-test": "cfn-lint templates/template.yaml",
     "cfn-test-local": "npm run lambda-build && npm run cfn-build && aws cloudformation package --template-file templates/template.yaml --output-template-file templates/packaged.yaml --s3-bucket $TEST_BUCKET && aws cloudformation deploy --template-file templates/packaged.yaml --stack-name MediaAnalysis --capabilities CAPABILITY_IAM",
-    "deploy": "npm run webui-deploy && npm run backend-deploy && npm run cfn-deploy",
-    "echo-version": "node -e \"const {readSync} = require('node-yaml'); console.log(readSync('templates/template.yaml').Globals.Function.Environment.Variables.VERSION)\"",
+    "deploy": "npm run zip && aws s3 cp ./`npm run echo-version --silent`.zip s3://$CFN_BUCKET/$npm_package_name/`npm run echo-version --silent`/$npm_package_name.zip",
+    "echo-version": "echo v`node -e \"const {readSync} = require('node-yaml'); console.log(readSync('templates/template.yaml').Globals.Function.Environment.Variables.VERSION)\"`",
     "lambda-build": "npm run lambda-build-layers && npm run lambda-build-orchestrator && npm run lambda-build-setup",
     "lambda-build-layers": "cd src/backend/functions/layers && npm run build",
     "lambda-build-orchestrator": "cd src/backend/functions/orchestrator && npm run build",
@@ -32,14 +30,12 @@
     "postinstall": "cd src/frontend && npm i && cd ../backend/functions/setup && npm i && cd ../orchestrator && npm i",
     "pre-deploy-test": "taskcat -c ci/taskcat.yml --verbose --exclude src --exclude docs --exclude taskcat_outputs",
     "start": "cd src/frontend && npm start",
-    "tag": "git tag v`npm run echo-version --silent`",
+    "tag": "git tag `npm run echo-version --silent`",
     "test": "npm run cfn-test && npm run webui-test && npm run orch-test",
     "webui-build": "cd src/frontend && npm run build",
-    "webui-deploy": "cd src/frontend/build && aws s3 cp . s3://media-analysis-demo/static --recursive --acl public-read --exclude settings.js --exclude .DS_Store",
     "webui-package": "cd src/frontend/build && zip -r ../../../backend/frontend.zip .",
-    "webui-deploy-clean": "aws s3 rm s3://media-analysis-demo/static --recursive",
     "webui-test": "cd src/frontend && npm t",
-    "zip": "zip -r v`npm run echo-version --silent`.zip -@ < ci/include.lst"
+    "zip": "zip -r `npm run echo-version --silent`.zip -@ < ci/include.lst"
   },
   "repository": {
     "type": "git",
