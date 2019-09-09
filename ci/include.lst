@@ -1,5 +1,6 @@
 backend
 cfn-publish.config
+frontend.zip
 package.json
 templates
-README.md
+transcriber.zip

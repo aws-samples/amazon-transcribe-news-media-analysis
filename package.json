@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "backend": "npm run backend-package && npm run backend-deploy",
-    "backend-package": "cd src/backend/transcriber/ && zip -r ../../../backend/transcriber.zip Dockerfile pom.xml src/",
+    "backend-package": "cd src/backend/transcriber/ && zip -r ../../../transcriber.zip Dockerfile pom.xml src/",
     "build": "npm run webui-build && npm run lambda-build && npm run cfn-build && npm run backend-package && npm run webui-package",
     "cfn-build": "npm run cfn-dist && cfn-flip -c -n -l src/cfn/template.yaml templates/template.yaml && npm run cfn-lambdas-dist && npm run cfn-copy-lambdas",
     "cfn-copy-lambdas": "npm run cfn-copy-lambdas-aws_sdk && npm run cfn-copy-lambdas-fp && npm run cfn-copy-lambdas-orchestrator && npm run cfn-copy-lambdas-setup",
@@ -33,7 +33,7 @@
     "tag": "git tag `npm run echo-version --silent`",
     "test": "npm run cfn-test && npm run webui-test && npm run orch-test",
     "webui-build": "cd src/frontend && npm run build",
-    "webui-package": "cd src/frontend/build && zip -r ../../../backend/frontend.zip .",
+    "webui-package": "cd src/frontend/build && zip -r ../../../frontend.zip .",
     "webui-test": "cd src/frontend && npm t",
     "zip": "zip -r `npm run echo-version --silent`.zip -@ < ci/include.lst"
   },
