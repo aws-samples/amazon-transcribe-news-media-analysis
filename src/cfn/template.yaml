@@ -8,6 +8,10 @@ Globals:
       AllowMethods: "'GET,POST,OPTIONS,DELETE,PUT'"
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       AllowOrigin: "'*'"
+  Function:
+    Environment:
+      Variables:
+        VERSION: '0.6'
 
 Parameters:
 
@@ -413,7 +417,7 @@ Resources:
           API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
           BUILD_BUCKET: !Ref CodeBuildArtifactBucket
           COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
-          FROM_BUCKET: media-analysis-demo
+          FROM_BUCKET: !Sub solution-builders-${AWS::Region}
           MAX_TASKS: !Ref MaxTasksCapacity
           REGION: !Ref AWS::Region
           REPOSITORY: !Ref ECRRepository
@@ -564,7 +568,7 @@ Resources:
                 - docker push "$IMAGE_URI"
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/docker:17.09.0
+        Image: aws/codebuild/docker:18.09.0
         Type: LINUX_CONTAINER
         EnvironmentVariables:
           - Name: AWS_DEFAULT_REGION

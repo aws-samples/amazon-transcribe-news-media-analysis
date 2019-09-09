@@ -18,7 +18,7 @@ RUN mvn dependency:go-offline -B
 
 COPY src/ /build/src/
 
-RUN mvn package
+RUN mvn package -o
 
 # Main Dockerfile
 

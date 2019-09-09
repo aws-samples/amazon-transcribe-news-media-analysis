@@ -5,10 +5,11 @@ const {
   FROM_BUCKET,
   MAX_TASKS,
   REGION,
-  TO_BUCKET
+  TO_BUCKET,
+  VERSION
 } = process.env;
 
-const BACKEND_PATH = "build/backend.zip";
+const BACKEND_PATH = `amazon-transcribe-news-media-analysis/v${VERSION}/transcriber.zip`;
 const CONFIG_FILENAME = "settings.js";
 const FROM_PREFIX = "static/";
 
@@ -31,19 +32,19 @@ module.exports = s3 => {
   };
 
   return {
-    copyFiles: () =>
-      listFiles({ Bucket: FROM_BUCKET, Prefix: FROM_PREFIX }).then(result =>
-        Promise.all(
-          result.Contents.map(file =>
-            copyFile({
-              ACL: "public-read",
-              Bucket: TO_BUCKET,
-              CopySource: `${FROM_BUCKET}/${file.Key}`,
-              Key: file.Key.slice(FROM_PREFIX.length)
-            })
-          )
-        )
-      ),
+    copyFiles: () => Promise.resolve(),
+      // listFiles({ Bucket: FROM_BUCKET, Prefix: FROM_PREFIX }).then(result =>
+      //   Promise.all(
+      //     result.Contents.map(file =>
+      //       copyFile({
+      //         ACL: "public-read",
+      //         Bucket: TO_BUCKET,
+      //         CopySource: `${FROM_BUCKET}/${file.Key}`,
+      //         Key: file.Key.slice(FROM_PREFIX.length)
+      //       })
+      //     )
+      //   )
+      //),
 
     removeFiles: () =>
       Promise.all([
