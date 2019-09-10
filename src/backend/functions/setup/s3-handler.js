@@ -10,6 +10,7 @@ const {
 } = process.env;
 
 const BACKEND_PATH = `amazon-transcribe-news-media-analysis/v${VERSION}/transcriber.zip`;
+const BUILD_PATH = 'build/transcriber.zip';
 const CONFIG_FILENAME = "settings.js";
 const FROM_PREFIX = "static/";
 
@@ -66,7 +67,7 @@ module.exports = s3 => {
       copyFile({
         Bucket: BUILD_BUCKET,
         CopySource: `${FROM_BUCKET}/${BACKEND_PATH}`,
-        Key: BACKEND_PATH
+        Key: BUILD_PATH
       }),
 
     writeSettings: () =>

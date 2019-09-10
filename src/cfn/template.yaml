@@ -11,7 +11,7 @@ Globals:
   Function:
     Environment:
       Variables:
-        VERSION: '0.8'
+        VERSION: '0.9'
 
 Parameters:
 
@@ -624,9 +624,9 @@ Resources:
                 Provider: S3
               Configuration:
                 S3Bucket: !Ref CodeBuildArtifactBucket
-                S3ObjectKey: build/backend.zip
+                S3ObjectKey: build/transcriber.zip
               OutputArtifacts:
-                - Name: Backend
+                - Name: Transcriber
               RunOrder: 1
         - Name: Build
           Actions:
@@ -639,7 +639,7 @@ Resources:
               Configuration:
                 ProjectName: !Ref CodeBuildProject
               InputArtifacts:
-                - Name: Backend
+                - Name: Transcriber
               OutputArtifacts:
                 - Name: BuildOutput
               RunOrder: 1
