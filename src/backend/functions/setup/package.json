@@ -5,9 +5,14 @@
   "description": "Setup the static S3 files",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf dist && rsync -avz . dist/ --exclude 'node_modules' --exclude 'test'"
+    "prebuild": "npm install --production",
+    "build": "rm -rf dist && rsync -avz . dist/ --exclude 'test'"
   },
   "dependencies": {
+    "mime-types": "2.1.24",
+    "unzipper": "0.10.5"
+  },
+  "devDependencies": {
     "aws-sdk": "2.369.0"
   }
 }
