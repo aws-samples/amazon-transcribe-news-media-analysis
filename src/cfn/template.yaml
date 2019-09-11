@@ -9,9 +9,10 @@ Globals:
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       AllowOrigin: "'*'"
   Function:
+    Runtime: nodejs10.x
     Environment:
       Variables:
-        VERSION: '0.9'
+        VERSION: '0.10'
 
 Parameters:
 
@@ -405,13 +406,12 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: MediaAnalysisSetup
-      Runtime: nodejs8.10
       Handler: index.handler
       CodeUri: ../backend/functions/setup/dist/
       Layers:
         - !Ref AWSSDKLayer
       Description: Custom Lambda resource for the Media Analysis Cloudformation Stack
-      MemorySize: 128
+      MemorySize: 256
       Environment:
         Variables:
           API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
@@ -421,7 +421,7 @@ Resources:
           MAX_TASKS: !Ref MaxTasksCapacity
           REGION: !Ref AWS::Region
           REPOSITORY: !Ref ECRRepository
-          TO_BUCKET: !Ref WebUIBucket
+          WEBUI_BUCKET: !Ref WebUIBucket
       Timeout: 30
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -466,7 +466,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: index.handler
-      Runtime: nodejs10.x
       CodeUri: ../backend/functions/orchestrator/dist/
       Timeout: 60
       MemorySize: 512
