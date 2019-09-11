@@ -14,6 +14,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-api:2.12.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-core:2.12.1" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-simple:1.7.26" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.26" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.8" level="project" />
     <orderEntry type="library" name="Maven: software.amazon.awssdk:dynamodb:2.5.71" level="project" />
     <orderEntry type="library" name="Maven: software.amazon.awssdk:aws-json-protocol:2.5.71" level="project" />
@@ -21,7 +23,6 @@
     <orderEntry type="library" name="Maven: software.amazon.awssdk:protocol-core:2.5.71" level="project" />
     <orderEntry type="library" name="Maven: software.amazon.awssdk:sdk-core:2.5.71" level="project" />
     <orderEntry type="library" name="Maven: software.amazon.awssdk:profiles:2.5.71" level="project" />
-    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.25" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.9.8" level="project" />
     <orderEntry type="library" name="Maven: software.amazon.awssdk:auth:2.5.71" level="project" />
     <orderEntry type="library" name="Maven: software.amazon.eventstream:eventstream:1.0.1" level="project" />
