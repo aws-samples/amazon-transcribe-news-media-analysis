@@ -1,6 +1,6 @@
 # Install dependencies and build jar
 
-FROM maven:3.6.1 as target
+FROM maven:3.6.2-jdk-8 as target
 
 RUN apt -y install wget
 
