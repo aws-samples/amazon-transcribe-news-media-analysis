@@ -1,10 +1,17 @@
 ## Amazon Transcribe News Media Analysis
 
+[![Build Status](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis.svg?branch=master)](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis)
+
 Transcribe news audio in realtime.
 
-> Warning: This project is currently being developed and the code shouldn't be used in production.
+This project allows customers to create transcriptions of live streaming video using AWS Transcribe. The application 
+consists of a Web UI where the user may submit URLs of videos for processing, which in turn creates an ECS task per URL
+running in Fargate to begin the transcription. A user can then view the video and follow the text in real time by 
+clicking on the link provided by the UI. 
 
-[![Build Status](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis.svg?branch=master)](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis)
+An overview of the architecture is below:
+
+![Architecture](images/arch_diagram.png)
 
 ### Deployment
 
@@ -14,7 +21,7 @@ The application is deployed as an [AWS CloudFormation](https://aws.amazon.com/cl
 You are responsible for the cost of the AWS services used while running this sample deployment. There is no additional cost for using this sample. For full details, see the pricing pages for each AWS service you will be using in this sample. Prices are subject to change.
 
 > **Note**   
-This template will deploy a Front-end layer that will contain some public S3 objects. The deployment will fail if the Public Objects are blocked on an account level.
+This template will deploy a Front-end layer that will contain some public S3 objects. _The deployment will fail if the Public Objects are blocked on an account level._
 
 1. Deploy the latest CloudFormation template by following the link below for your preferred AWS region:
 
@@ -55,18 +62,22 @@ This template will deploy a Front-end layer that will contain some public S3 obj
 
 #### Accessing the Application
 
-The application is accessed using a web browser. The address is the *url* output from the CloudFormation stack created during the Deployment steps.
+The application is accessed using a web browser. The address is the *url* output from the CloudFormation stack created 
+during the Deployment steps.
 
 * Click "*Add new...  *" if you wish to add new media stream.
 * Click on the "*Open in a new window*" icon to start streaming the media with the transcription.
 
 ### Remove the application
 
-To remove the application open the AWS CloudFormation Console, click the MediaAnalysis project, right-click and select "*Delete Stack*". Your stack will take some time to be deleted. You can track its progress in the "Events" tab. When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from the list.
+To remove the application open the AWS CloudFormation Console, click the MediaAnalysis project, right-click and select 
+"*Delete Stack*". Your stack will take some time to be deleted. You can track its progress in the "Events" tab. 
+When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from 
+the list.
 
 ### Transcriber
 
-To run the Transciber as a standalone application run the following shell commands:
+To run the Transciber as a standalone Docker application run the following shell commands:
 
 ```bash
 cd /src/backend/transcriber
@@ -81,7 +92,7 @@ docker run
 --env AWS_REGION=${AWS_REGION}
 --env TASKS_DYNAMO_DB_TABLE=MediaAnalysisTasks
 --env MEDIA_URL=${MEDIA_URL}
-transcriber java -jar -Dlog4j.configurationFile=log4j2.xml /transcriber.jar
+transcriber java -jar -Dlog4j.configurationFile=log4j2.xml transcriber.jar
 ```
 
 ## License
