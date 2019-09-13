@@ -214,57 +214,23 @@ describe('lib/index.js', () => {
                 })
         });
 
-        it('should restart transcription when ERROR state received', () => {
-            const runTaskStub = sinon.stub().returns({
-                promise: () => Promise.resolve({
-                    tasks: [{
-                        taskArn: 'taskArn'
-                    }]
-                })
-            });
-
+        it('should transition to WAITING state when ERROR state received', () => {
             const updateStub = sinon.stub().returns({promise: () => Promise.resolve('yay')});
-
-            const expectedTaskParams = {
-                taskDefinition: 'transcriber',
-                cluster:'MyCluster',
-                launchType: 'FARGATE',
-                networkConfiguration: {
-                    awsvpcConfiguration: {
-                        subnets: ['subnet1', 'subnet2'],
-                        assignPublicIp: 'DISABLED'
-                    }
-                },
-                overrides: {
-                    containerOverrides: [
-                        {
-                            name: 'transcriber',
-                            environment: [
-                                {
-                                    name: 'MEDIA_URL',
-                                    value: 'https://foo.bar/foo'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            };
 
             const expectedUpdateParams = {
                 TableName: 'MediaAnalysisTasks',
                 Key: {
                     MediaUrl: 'https://foo.bar/foo'
                 },
-                UpdateExpression: 'ADD Retries :val SET TaskStatus = :status, TaskArn = :task',
+                UpdateExpression: 'ADD Retries :val SET TaskStatus = :status',
                 ExpressionAttributeValues: {
                     ':val': 1,
-                    ':status':  'WAITING',
-                    ':task': 'taskArn'
+                    ':status':  'WAITING'
                 },
                 ReturnValues: 'ALL_NEW'
             };
 
-            const handler = index({runTask: runTaskStub}, {update: updateStub}, {
+            const handler = index({}, {update: updateStub}, {
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
                 RETRY_THRESHOLD: '3',
@@ -274,20 +240,11 @@ describe('lib/index.js', () => {
 
             return handler(errorEvent, {})
                 .then(() => {
-                    sinon.assert.calledWith(runTaskStub, expectedTaskParams);
                     sinon.assert.calledWith(updateStub, expectedUpdateParams);
                 })
         });
 
         it('should not restart transcription when ERROR state received after 3 retries', () => {
-            const runTaskStub = sinon.stub().returns({
-                promise: () => Promise.resolve({
-                    tasks: [{
-                        taskArn: 'taskArn'
-                    }]
-                })
-            });
-
             const updateStub = sinon.stub()
                 .returns({promise: () => Promise.resolve({
                     Attributes: {
@@ -312,7 +269,7 @@ describe('lib/index.js', () => {
                 ReturnValues: 'ALL_NEW'
             };
 
-            const handler = index({runTask: runTaskStub}, {update: updateStub}, {
+            const handler = index({}, {update: updateStub}, {
                 TASKS_TABLE_NAME: 'MediaAnalysisTasks',
                 CLUSTER: 'MyCluster',
                 RETRY_THRESHOLD: '3',

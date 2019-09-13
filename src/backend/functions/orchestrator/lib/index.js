@@ -71,7 +71,10 @@ const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, med
 
    return ecs.runTask(params)
        .promise()
-       .then(({tasks}) => ({tasksTableName, mediaUrl, taskArn: tasks[0].taskArn}))
+       .then(({tasks}) => {
+          console.log(`Task started: ${tasks[0].taskArn}`);
+          return {tasksTableName, mediaUrl, taskArn: tasks[0].taskArn}
+       })
 });
 
 // startTranscription :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
@@ -117,26 +120,6 @@ function createDeleteParams({mediaUrl, tasksTableName}) {
 // terminated :: ({k:v} -> Promise {k: v}) -> {k: v} -> {k: v} -> Promise {k:v}
 const terminated = R.curry(deleteItem => o(deleteItem, createDeleteParams));
 
-// errorUpdate :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
-const errorUpdate = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) => {
-   const params = {
-      TableName: tasksTableName,
-      Key: {
-         MediaUrl: mediaUrl
-      },
-      UpdateExpression: 'ADD Retries :val SET TaskStatus = :status, TaskArn = :task',
-      ExpressionAttributeValues: {
-         ':val': 1,
-         ':status':  'WAITING',
-         ':task': taskArn
-      },
-      ReturnValues: 'ALL_NEW'
-   };
-
-   return updateItem(params)
-       .then(({Attributes}) => ({...Attributes, tasksTableName}))
-});
-
 const unrecoverableError = R.curry((updateItem, {tasksTableName, mediaUrl}) => {
    const params = {
       TableName: tasksTableName,
@@ -153,8 +136,24 @@ const unrecoverableError = R.curry((updateItem, {tasksTableName, mediaUrl}) => {
    return updateItem(params);
 });
 
-// error :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> Promise {k:v}
-const error = R.curry((ecs, updateItem) => composeP(errorUpdate(updateItem), startTranscription(ecs)));
+// error :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
+const error = R.curry((updateItem, {tasksTableName, mediaUrl}) => {
+   const params = {
+      TableName: tasksTableName,
+      Key: {
+         MediaUrl: mediaUrl
+      },
+      UpdateExpression: 'ADD Retries :val SET TaskStatus = :status',
+      ExpressionAttributeValues: {
+         ':val': 1,
+         ':status':  'WAITING'
+      },
+      ReturnValues: 'ALL_NEW'
+   };
+
+   return updateItem(params)
+       .then(({Attributes}) => ({...Attributes, tasksTableName}))
+});
 
 function isUnrecoverableError(retries, retryThreshold, taskStatus) {
    return retries > retryThreshold && !R.includes(taskStatus, ['TERMINATING', 'TERMINATED']);
@@ -170,7 +169,7 @@ module.exports = (ecs, ddb, env) => {
       PROCESSING: noop,
       TERMINATING: terminating(ecs),
       TERMINATED: terminated(params => ddb.delete(params).promise()),
-      ERROR: error(ecs, update),
+      ERROR: error(update),
       UNRECOVERABLE_ERROR: noop
    };
 
@@ -185,13 +184,15 @@ module.exports = (ecs, ddb, env) => {
 
          const params = R.mergeRight(normalisedEnv, convertImage(image));
 
-         const {mediaUrl, retries = 0, taskStatus, tasksTableName, retryThreshold} = params;
+         const {mediaUrl, retries = 0, taskStatus, tasksTableName, retryThreshold = '3'} = params;
 
-         console.log('Status: ' + taskStatus);
+         console.log(`Status: ${taskStatus}`);
+
+         if(taskStatus === 'UNRECOVERABLE_ERROR') return Promise.resolve({});
 
          if(isUnrecoverableError(retries, R.defaultTo(3, parseInt(retryThreshold)), taskStatus)) {
-            console.log('Error threshold exceeded');
-            return unrecoverableError(update, {mediaUrl, tasksTableName});
+            console.log(`Error threshold exceeded. Retries: ${retries}`);
+            return unrecoverableError(update, {mediaUrl, tasksTableName})
          }
 
          const handler = R.defaultTo(noop, handlers[taskStatus]);
@@ -205,7 +206,8 @@ module.exports = (ecs, ddb, env) => {
              const {mediaUrl, tasksTableName} = err;
 
              const stop = err.taskArn != null ?
-                 stopTranscription(ecs, {mediaUrl, cluster: normalisedEnv.cluster, taskArn: err.taskArn, tasksTableName}) :
+                 stopTranscription(ecs, {mediaUrl, cluster: normalisedEnv.cluster, taskArn: err.taskArn, tasksTableName})
+                     .then(() => console.log(`${err.taskArn} stopped`)) :
                  Promise.resolve({});
 
              return stop.then(() => unrecoverableError(update, {tasksTableName, mediaUrl}));
