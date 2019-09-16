@@ -87,7 +87,7 @@ To install the required Node.js libraries, run `npm install`. To start a local b
 
 ## Working with CloudFormation
 
-The CloudFormation source code is located inside the `src/cfn` directory. The template uses a custom resource for populating the S3 bucket with the Web UI's static resources and to trigger the back-end's build. The lambda source code is located inside the `src/backend/functions/setup` directory.
+The CloudFormation template is located inside the `src/cfn` directory. The template uses a custom resource to populate the S3 bucket with the Web UI static resources and to trigger the back-end build. The lambda function source code is located inside the `src/backend/functions/setup` directory.
 
 ## Working with the Transcriber Java back-end
 
