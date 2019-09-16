@@ -83,7 +83,7 @@ The following applications are required to build and test changes:
 * Java
 * Maven
 
-To start, run `npm install`. To start a local build, run `npm run build`.
+To install the required Node.js libraries, run `npm install`. To start a local build, run `npm run build`.
 
 ## Working with CloudFormation
 
