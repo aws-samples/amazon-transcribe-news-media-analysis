@@ -11,7 +11,7 @@ information to effectively respond to your bug report or contribution.
 * [Introduction](#introduction)
   * [Reporting Bugs/Feature Requests](#reporting-bugsfeature-requests)
   * [Contributing via Pull Requests](#contributing-via-pull-requests)
-  * [Finding contributions to work on](#finding-contributions-to-work-on)
+  * [Ways to contribute](#ways-to-contribute)
   * [Code of Conduct](#code-of-conduct)
   * [Security issue notifications](#security-issue-notifications)
   * [Licensing](#licensing)
