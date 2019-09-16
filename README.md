@@ -91,7 +91,12 @@ The application is accessed using a web browser. The address is the *url* output
 
 ### Remove the application
 
-To remove the application open the AWS CloudFormation Console, click the MediaAnalysis project, right-click and select "*Delete Stack*". Your stack will take some time to be deleted. You can track its progress in the "Events" tab. 
+To remove the application:
+
+1. Open the AWS CloudFormation Console
+1. Click the MediaAnalysis project, right-click and select "*Delete Stack*"
+1. Your stack will take some time to be deleted. You can track its progress in the "Events" tab.
+1. When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from the list.
 When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from 
 the list.
 
