@@ -91,7 +91,7 @@ The CloudFormation source code is located inside the `src/cfn` directory. The te
 
 ## Working with the Transcriber Java back-end
 
-To run the Transciber as a standalone Docker application run the following shell commands:
+To run the Transcriber as a standalone Docker application run the following shell commands:
 
 ```bash
 cd /src/backend/transcriber

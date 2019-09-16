@@ -643,6 +643,74 @@ Resources:
                 - Name: BuildOutput
               RunOrder: 1
 
+  EcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  TranscriberLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${TaskName}
+      RetentionInDays: 7
+
+  TranscriberTaskIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonTranscribeFullAccess
+
+  TranscriberTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      TaskRoleArn: !Ref TranscriberTaskIAMRole
+      ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
+      NetworkMode: awsvpc
+      Memory: '4096'
+      Cpu: '2048'
+      Family: !Ref TaskName
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: !Ref TaskName
+          Essential: true
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref TranscriberLogGroup
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref 'AWS::StackName'
+          Environment:
+            - Name: TRANSCRIPTS_DYNAMO_DB_TABLE
+              Value: !Ref TranscriptDynamoTable
+            - Name: RETRY_THRESHOLD
+              Value: !Ref RetryThreshold
+            - Name: TASKS_DYNAMO_DB_TABLE
+              Value: !Ref TasksDynamoTable
+            - Name: CLUSTER
+              Value: !Ref ECSCluster
+            - Name: AWS_REGION
+              Value: !Ref 'AWS::Region'
+              
   # Data
 
   DbReadRole:
@@ -1077,74 +1145,6 @@ Resources:
             x-amazon-apigateway-authtype: awsSigv4
     DependsOn:
       - Account
-
-  EcsTaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-  TransciberLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /ecs/${TaskName}
-      RetentionInDays: 7
-
-  TransciberTaskIAMRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-        - arn:aws:iam::aws:policy/AmazonTranscribeFullAccess
-
-  TransciberTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      TaskRoleArn: !Ref TransciberTaskIAMRole
-      ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
-      NetworkMode: awsvpc
-      Memory: '4096'
-      Cpu: '2048'
-      Family: !Ref TaskName
-      RequiresCompatibilities:
-        - FARGATE
-      ContainerDefinitions:
-        - Name: !Ref TaskName
-          Essential: true
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref TransciberLogGroup
-              awslogs-region: !Ref 'AWS::Region'
-              awslogs-stream-prefix: !Ref 'AWS::StackName'
-          Environment:
-            - Name: TRANSCRIPTS_DYNAMO_DB_TABLE
-              Value: !Ref TranscriptDynamoTable
-            - Name: RETRY_THRESHOLD
-              Value: !Ref RetryThreshold
-            - Name: TASKS_DYNAMO_DB_TABLE
-              Value: !Ref TasksDynamoTable
-            - Name: CLUSTER
-              Value: !Ref ECSCluster
-            - Name: AWS_REGION
-              Value: !Ref 'AWS::Region'
 
   WebUIBucket:
     Type: AWS::S3::Bucket
