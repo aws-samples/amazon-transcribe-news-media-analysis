@@ -80,8 +80,10 @@ The following applications are required to contribute:
 * Node.js >=v8
 * AWS CLI
 * Docker
+* Java
+* Maven
 
-To start, run `npm install`.
+To start, run `npm install`. To start a local build, run `npm run build`.
 
 ## Working with CloudFormation
 

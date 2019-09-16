@@ -84,16 +84,14 @@ This template will deploy a Front-end layer that will contain some public S3 obj
 
 #### Accessing the Application
 
-The application is accessed using a web browser. The address is the *url* output from the CloudFormation stack created 
-during the Deployment steps.
+The application is accessed using a web browser. The address is the *url* output from the CloudFormation stack created during the Deployment steps.
 
 * Click "*Add new...  *" if you wish to add new media stream.
 * Click on the "*Open in a new window*" icon to start streaming the media with the transcription.
 
 ### Remove the application
 
-To remove the application open the AWS CloudFormation Console, click the MediaAnalysis project, right-click and select 
-"*Delete Stack*". Your stack will take some time to be deleted. You can track its progress in the "Events" tab. 
+To remove the application open the AWS CloudFormation Console, click the MediaAnalysis project, right-click and select "*Delete Stack*". Your stack will take some time to be deleted. You can track its progress in the "Events" tab. 
 When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from 
 the list.
 
