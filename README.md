@@ -1,19 +1,41 @@
 ## Amazon Transcribe News Media Analysis
 
-[![Build Status](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis.svg?branch=master)](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis)
-
 Transcribe news audio in realtime.
 
-This project allows customers to create transcriptions of live streaming video using AWS Transcribe. The application 
+[![Build Status](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis.svg?branch=master)](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis)
+
+This solution allows customers to create transcriptions of live streaming video using AWS Transcribe. The application 
 consists of a Web UI where the user may submit URLs of videos for processing, which in turn creates an ECS task per URL
 running in Fargate to begin the transcription. A user can then view the video and follow the text in real time by 
 clicking on the link provided by the UI. 
 
+### Index
+
+* [Architecture](#architecture)
+* [Usage](#usage)
+  * [Prerequisites](#prerequisites)
+  * [Deployment](#deployment)
+  * [Accessing the application](#accessing-the-application)
+* [Remove the application](#remove-the-application)
+* [Contributing](#contributing)
+
+### Architecture
+
+The Transcribe News Media Analysis uses [Amazon Transcribe](https://aws.amazon.com/transcribe) for transcribing audio to text, [AWS Lambda](https://aws.amazon.com/lambda) and [Amazon ECS](https://aws.amazon.com/ecs) for computing, [Amazon DynamoDB](https://aws.amazon.com/dynamodb) for storage, [Amazon API Gateway](https://aws.amazon.com/api-gateway) and [Amazon Cognito](https://aws.amazon.com/cognito) for the API, and [Amazon S3](https://aws.amazon.com/s3), [AWS Amplify](https://aws.amazon.com/amplify), and [React](https://reactjs.org) for the front-end layer.
+
 An overview of the architecture is below:
 
-![Architecture](images/arch_diagram.png)
+![Architecture](docs/arch_diagram.png)
 
-### Deployment
+### Usage
+
+#### Prerequisites
+
+To deploy the application you will require an AWS account. If you don’t already have an AWS account, create one at <https://aws.amazon.com> by following the on-screen instructions. Your access to the AWS account must have IAM permissions to launch AWS CloudFormation templates that create IAM roles.
+
+To use the application you will require a browser.
+
+#### Deployment
 
 The application is deployed as an [AWS CloudFormation](https://aws.amazon.com/cloudformation) template.
 
@@ -75,26 +97,10 @@ To remove the application open the AWS CloudFormation Console, click the MediaAn
 When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from 
 the list.
 
-### Transcriber
+## Contributing
 
-To run the Transciber as a standalone Docker application run the following shell commands:
-
-```bash
-cd /src/backend/transcriber
-
-docker build -t transcriber .
-
-docker run
---env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
---env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
---env TRANSCRIPTS_DYNAMO_DB_TABLE=MediaAnalysisTranscript
---env LOG_LEVEL=INFO
---env AWS_REGION=${AWS_REGION}
---env TASKS_DYNAMO_DB_TABLE=MediaAnalysisTasks
---env MEDIA_URL=${MEDIA_URL}
-transcriber java -jar -Dlog4j.configurationFile=log4j2.xml transcriber.jar
-```
+Contributions are more than welcome. Please read the [code of conduct](CODE_OF_CONDUCT.md) and the [contributing guidelines](CONTRIBUTING.md).
 
 ## License
 
-This library is licensed under the MIT-0 License. 
+This sample code is made available under a modified MIT license. See the LICENSE file.
