@@ -43,7 +43,7 @@ The application is deployed as an [AWS CloudFormation](https://aws.amazon.com/cl
 You are responsible for the cost of the AWS services used while running this sample deployment. There is no additional cost for using this sample. For full details, see the pricing pages for each AWS service you will be using in this sample. Prices are subject to change.
 
 > **Note**   
-This template will deploy a Front-end layer that will contain some public S3 objects. _The deployment will fail if the Public Objects are blocked on an account level._
+This template will deploy a Front-end layer that will contain some public S3 objects. _The deployment will fail if the Public Objects are blocked at an account level._
 
 1. Deploy the latest CloudFormation template by following the link below for your preferred AWS region:
 
