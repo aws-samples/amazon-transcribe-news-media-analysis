@@ -75,7 +75,7 @@ We may ask you to sign a [Contributor License Agreement (CLA)](http://en.wikiped
 
 ## Prerequisites
 
-The following applications are required to contribute:
+The following applications are required to build and test changes:
 
 * Node.js >=v8
 * AWS CLI
