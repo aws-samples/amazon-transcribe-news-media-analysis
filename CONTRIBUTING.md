@@ -54,7 +54,7 @@ GitHub provides additional document on [forking a repository](https://help.githu
 
 
 ### Ways to contribute
-Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws-samples/amazon-transcribe-news-media-analysis/labels/help%20wanted) issues is a great place to start.
+Looking at existing issues is a great way to find areas to contribute. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws-samples/amazon-transcribe-news-media-analysis/labels/help%20wanted) issues is a great place to start.
 
 
 ### Code of Conduct
