@@ -94,7 +94,7 @@ The CloudFormation template is located inside the `src/cfn` directory. The templ
 To run the Transcriber as a standalone Docker application run the following shell commands:
 
 ```bash
-cd /src/backend/transcriber
+cd src/backend/transcriber
 
 docker build -t transcriber .
 
