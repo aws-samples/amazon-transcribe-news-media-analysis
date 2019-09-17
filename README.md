@@ -21,7 +21,12 @@ clicking on the link provided by the UI.
 
 ### Architecture
 
-The Transcribe News Media Analysis uses [Amazon Transcribe](https://aws.amazon.com/transcribe) for transcribing audio to text, [AWS Lambda](https://aws.amazon.com/lambda) and [Amazon ECS](https://aws.amazon.com/ecs) for computing, [Amazon DynamoDB](https://aws.amazon.com/dynamodb) for storage, [Amazon API Gateway](https://aws.amazon.com/api-gateway) and [Amazon Cognito](https://aws.amazon.com/cognito) for the API, and [Amazon S3](https://aws.amazon.com/s3), [AWS Amplify](https://aws.amazon.com/amplify), and [React](https://reactjs.org) for the front-end layer.
+The Transcribe News Media Analysis uses:
+* [Amazon Transcribe](https://aws.amazon.com/transcribe) for transcribing audio to text
+* [AWS Lambda](https://aws.amazon.com/lambda) and [Amazon ECS](https://aws.amazon.com/ecs) for computing
+* [Amazon DynamoDB](https://aws.amazon.com/dynamodb) for storage
+* [Amazon API Gateway](https://aws.amazon.com/api-gateway) and [Amazon Cognito](https://aws.amazon.com/cognito) for the API
+* [Amazon S3](https://aws.amazon.com/s3), [AWS Amplify](https://aws.amazon.com/amplify), and [React](https://reactjs.org) for the front-end layer
 
 An overview of the architecture is below:
 
