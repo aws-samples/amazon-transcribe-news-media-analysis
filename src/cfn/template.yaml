@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon Transcribe News Media Analysis (uksb-1potrt4cg)
 Transform: AWS::Serverless-2016-10-31
@@ -78,7 +79,7 @@ Mappings:
       HasThreeAZs: true
 
 Conditions:
-  HasThreeAZs: !Equals [ !FindInMap [ Regions, !Ref "AWS::Region", HasThreeAZs ], true ]
+  HasThreeAZs: !Equals [!FindInMap [Regions, !Ref "AWS::Region", HasThreeAZs], true]
 
 Resources:
 
@@ -189,7 +190,7 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-  
+
   PrivateRouteTable2:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -224,8 +225,8 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [ 0, !Ref PrivateSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Select [0, !Ref PrivateSubnetIpBlocks]
+      AvailabilityZone: !Select [0, !GetAZs '']
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName} Private Subnet 1
@@ -234,8 +235,8 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [ 1, !Ref PrivateSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Select [1, !Ref PrivateSubnetIpBlocks]
+      AvailabilityZone: !Select [1, !GetAZs '']
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName} Private Subnet 2
@@ -245,8 +246,8 @@ Resources:
     Condition: HasThreeAZs
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [ 2, !Ref PrivateSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      CidrBlock: !Select [2, !Ref PrivateSubnetIpBlocks]
+      AvailabilityZone: !Select [2, !GetAZs '']
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName} Private Subnet 3
@@ -274,7 +275,7 @@ Resources:
     Type: AWS::EC2::NetworkAcl
     Properties:
       VpcId: !Ref VPC
-      
+
   PublicNetworkAclEntryInAllowAll:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
@@ -331,8 +332,8 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [ 0, !Ref PublicSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Select [0, !Ref PublicSubnetIpBlocks]
+      AvailabilityZone: !Select [0, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -342,8 +343,8 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [ 1, !Ref PublicSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Select [1, !Ref PublicSubnetIpBlocks]
+      AvailabilityZone: !Select [1, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -354,8 +355,8 @@ Resources:
     Condition: HasThreeAZs
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [ 2, !Ref PublicSubnetIpBlocks ]
-      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      CidrBlock: !Select [2, !Ref PublicSubnetIpBlocks]
+      AvailabilityZone: !Select [2, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -386,7 +387,7 @@ Resources:
       RouteTableIds:
         - !Ref PrivateRouteTable1
         - !Ref PrivateRouteTable2
-        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
+        - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
       VpcId: !Ref VPC
 
@@ -396,7 +397,7 @@ Resources:
       RouteTableIds:
         - !Ref PrivateRouteTable1
         - !Ref PrivateRouteTable2
-        - !If [ HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue' ]
+        - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId: !Ref VPC
 
@@ -427,11 +428,11 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - Version: "2012-10-17"
           Statement:
-          - Effect: Allow
-            Action:
-              - 's3:*'
-              - 'ecr:*'
-            Resource: '*'
+            - Effect: Allow
+              Action:
+                - 's3:*'
+                - 'ecr:*'
+              Resource: '*'
 
   SetupWebUIAndDockerImage:
     Type: Custom::Setup
@@ -710,8 +711,8 @@ Resources:
               Value: !Ref ECSCluster
             - Name: AWS_REGION
               Value: !Ref 'AWS::Region'
-              
-  # Data
+
+  # Data
 
   DbReadRole:
     Type: AWS::IAM::Role
@@ -745,12 +746,12 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: MediaAnalysisTasks
-      AttributeDefinitions: 
-        - 
+      AttributeDefinitions:
+        -
           AttributeName: MediaUrl
           AttributeType: S
-      KeySchema: 
-        - 
+      KeySchema:
+        -
           AttributeName: MediaUrl
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
@@ -763,35 +764,35 @@ Resources:
       TableName: MediaAnalysisTranscript
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-      AttributeDefinitions: 
-        - 
+      AttributeDefinitions:
+        -
           AttributeName: MediaUrl
           AttributeType: S
-        - 
+        -
           AttributeName: ResultId
           AttributeType: S
-        - 
+        -
           AttributeName: FragmentTimestamp
           AttributeType: N
-      KeySchema: 
-        - 
+      KeySchema:
+        -
           AttributeName: MediaUrl
           KeyType: HASH
-        - 
+        -
           AttributeName: ResultId
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
-      LocalSecondaryIndexes: 
-        - 
+      LocalSecondaryIndexes:
+        -
           IndexName: MediaAnalysisLSI
-          KeySchema: 
-            - 
+          KeySchema:
+            -
               AttributeName: MediaUrl
               KeyType: HASH
-            - 
+            -
               AttributeName: FragmentTimestamp
               KeyType: RANGE
-          Projection: 
+          Projection:
             ProjectionType: ALL
 
   # Rest API & Frontend
@@ -898,7 +899,7 @@ Resources:
                               "isPartial": $elem.IsPartial.BOOL
                             }#if($foreach.hasNext && $c < 1000),#end
                             #end
-                          ]
+                         ]
                         }
                 requestTemplates:
                   application/json: !Sub |
@@ -923,7 +924,7 @@ Resources:
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
           /tasks:
             get:
               consumes:
@@ -962,7 +963,7 @@ Resources:
                               "taskArn": "$elem.TaskArn.S"
                             }#if($foreach.hasNext),#end
                             #end
-                          ]
+                         ]
                         }
                 requestTemplates:
                   application/json: !Sub |
@@ -975,7 +976,7 @@ Resources:
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
           /tasks/{mediaUrl}:
             get:
               consumes:
@@ -1028,7 +1029,7 @@ Resources:
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
             delete:
               consumes:
                 - application/json
@@ -1072,13 +1073,13 @@ Resources:
                         ":newStatus": {
                           "S": "TERMINATING"
                         }
-                      }                      
+                      }
                     }
                 passthroughBehavior: when_no_match
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
             put:
               consumes:
                 - application/json
@@ -1136,7 +1137,7 @@ Resources:
                 httpMethod: POST
                 type: aws
               security:
-              - sigv4: []
+                - sigv4: []
         securityDefinitions:
           sigv4:
             type: apiKey
@@ -1151,8 +1152,8 @@ Resources:
     Properties:
       CorsConfiguration:
         CorsRules:
-        - AllowedHeaders: ['*']
-          AllowedMethods: [GET]
-          AllowedOrigins: ['*']
-          Id: MediaAnalysisCorsRule
-          MaxAge: 3600
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET]
+            AllowedOrigins: ['*']
+            Id: MediaAnalysisCorsRule
+            MaxAge: 3600
