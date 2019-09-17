@@ -1,6 +1,8 @@
 ## Amazon Transcribe News Media Analysis
 
-Transcribe news audio in realtime.
+Transcribe news audio in realtime
+
+> Warning: This project is currently being developed and the code shouldn't be used in production.
 
 [![Build Status](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis.svg?branch=master)](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis)
 
