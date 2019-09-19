@@ -3,3 +3,4 @@ awscli==1.16.205
 cfn_flip==1.1.0
 cfn_lint==0.22.4
 taskcat==0.8.40
+yamllint==1.17.0

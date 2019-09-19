@@ -17,7 +17,7 @@
     "cfn-lambdas-dist-fp": "if [ ! -d './backend/functions/layers/fp' ]; then mkdir -p backend/functions/layers/fp; fi",
     "cfn-lambdas-dist-orchestrator": "if [ ! -d './backend/functions/orchestrator/' ]; then mkdir -p backend/functions/orchestrator/; fi",
     "cfn-lambdas-dist-setup": "if [ ! -d './backend/functions/setup/' ]; then mkdir -p backend/functions/setup/; fi",
-    "cfn-test": "cfn-lint templates/template.yaml",
+    "cfn-test": "yamllint -d '{extends: default, rules: {line-length: disable}}' src/cfn/template.yaml && cfn-lint src/cfn/template.yaml",
     "cfn-test-local": "npm run lambda-build && npm run cfn-build && aws cloudformation package --template-file templates/template.yaml --output-template-file templates/packaged.yaml --s3-bucket $TEST_BUCKET && aws cloudformation deploy --template-file templates/packaged.yaml --stack-name amazon-transcribe-news-media-analysis --capabilities CAPABILITY_IAM",
     "deploy": "npm run zip && aws s3 cp ./`npm run echo-version --silent`.zip s3://$CFN_BUCKET/$npm_package_name/`npm run echo-version --silent`/$npm_package_name.zip",
     "echo-version": "echo v`node -e \"console.log(require('node-yaml').readSync('templates/template.yaml').Globals.Function.Environment.Variables.VERSION)\"`",
