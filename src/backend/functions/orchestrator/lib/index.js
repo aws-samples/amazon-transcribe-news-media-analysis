@@ -51,7 +51,7 @@ const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, med
       networkConfiguration: {
          awsvpcConfiguration: {
             subnets: subnets,
-            assignPublicIp: 'DISABLED'
+            assignPublicIp: 'ENABLED'
          }
       },
       overrides: {
