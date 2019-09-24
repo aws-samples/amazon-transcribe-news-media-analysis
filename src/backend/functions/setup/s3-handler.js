@@ -5,6 +5,7 @@ const {
   API_GATEWAY,
   BUILD_BUCKET,
   COGNITO_IDENTITY_POOL,
+  CREATE_CLOUDFRONT_DISTRIBUTION,
   FROM_BUCKET,
   MAX_TASKS,
   REGION,
@@ -12,6 +13,7 @@ const {
   VERSION
 } = process.env;
 
+const ACL = CREATE_CLOUDFRONT_DISTRIBUTION == "true" ? "private" : "public-read";
 const TRANSCRIBER_FILE = 'transcriber.zip';
 const SOLUTION_KEY = `amazon-transcribe-news-media-analysis/v${VERSION}`;
 const BACKEND_PATH = `${SOLUTION_KEY}/${TRANSCRIBER_FILE}`;
@@ -45,7 +47,7 @@ module.exports = s3 => {
             .then(directory => directory.files.filter(x => x.type !== 'Directory'))
             .then(files =>  files.map(
                 file => upload({
-                    ACL: 'public-read',
+                    ACL,
                     Body: file.stream(),
                     Bucket: WEBUI_BUCKET,
                     ContentType: mime.lookup(file.path) || 'application/octet-stream',
@@ -79,7 +81,7 @@ module.exports = s3 => {
 
     writeSettings: () =>
        putObject({
-         ACL: "public-read",
+         ACL,
          Bucket: WEBUI_BUCKET,
          Key: CONFIG_FILENAME,
          Body: `window.mediaAnalysisSettings = ${JSON.stringify({
