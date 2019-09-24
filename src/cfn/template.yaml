@@ -43,9 +43,20 @@ Parameters:
     Type: String
     Default: transcriber
 
+  CreateCloudFrontDistribution:
+    Description: Creates a CloudFront distribution for accessing the web interface of the demo. This must be enabled if S3 Block Public Access is enabled at an account level.
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+
 Outputs:
   url:
-    Value: !Sub https://${WebUIBucket}.s3.amazonaws.com/index.html
+    Value: !If
+      - WithCloudFront
+      - !Sub 'https://${CloudFrontDistribution.DomainName}'
+      - !Sub 'https://${WebUIBucket.RegionalDomainName}/index.html'
     Description: WebUI URL
 
 Mappings:
@@ -75,6 +86,7 @@ Mappings:
 
 Conditions:
   HasThreeAZs: !Equals [!FindInMap [Regions, !Ref "AWS::Region", HasThreeAZs], true]
+  WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, 'true']
 
 Resources:
 
@@ -226,6 +238,7 @@ Resources:
           API_GATEWAY: !Sub https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/PROD
           BUILD_BUCKET: !Ref CodeBuildArtifactBucket
           COGNITO_IDENTITY_POOL: !Ref CognitoIdentityPool
+          CREATE_CLOUDFRONT_DISTRIBUTION: !Ref CreateCloudFrontDistribution
           FROM_BUCKET: !Sub solution-builders-${AWS::Region}
           MAX_TASKS: !Ref MaxTasksCapacity
           REGION: !Ref AWS::Region
@@ -965,3 +978,52 @@ Resources:
             AllowedOrigins: ['*']
             Id: MediaAnalysisCorsRule
             MaxAge: 3600
+
+  WebUIBucketReadPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: WithCloudFront
+    Properties:
+      Bucket: !Ref WebUIBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Condition: WithCloudFront
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref WebUIBucket
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: WithCloudFront
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt WebUIBucket.RegionalDomainName
+            Id: myS3Origin-MediaAnalysis
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+        Enabled: true
+        HttpVersion: http2
+        Comment: The Distribution for the Media Analysis Web UI
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - HEAD
+            - GET
+            - OPTIONS
+          TargetOriginId: myS3Origin-MediaAnalysis
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
