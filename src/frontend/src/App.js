@@ -8,6 +8,7 @@ import ErrorAlert from "./components/ErrorAlert";
 import Header from "./components/Header";
 import MediaContent from "./components/MediaContent";
 import Media from "./components/Media";
+import SettingsHelp from "./components/SettingsHelp";
 
 export default () => {
   const [tasks, setTasks] = useState([]);
@@ -35,6 +36,7 @@ export default () => {
     <div className="App">
       <Header />
       <Container>
+        <SettingsHelp show={!window.mediaAnalysisSettings} />
         <ErrorAlert show={errorShown} />
         {watchMode ? (
           <MediaContent

@@ -8,7 +8,7 @@ import AddMediaContent from "./AddMediaContent";
 import DeleteMediaContent from "./DeleteMediaContent";
 import WatchUrlTextbox from "./WatchUrlTextbox";
 
-const { maxTasks } = window.mediaAnalysisSettings;
+const { maxTasks } = window.mediaAnalysisSettings || {};
 
 export default ({ addTask, deleteTask, onError, tasks, updateTasks }) => (
   <Table variant="dark">
