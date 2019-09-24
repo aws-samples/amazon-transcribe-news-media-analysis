@@ -81,7 +81,7 @@ describe('lib/index.js', () => {
                 networkConfiguration: {
                     awsvpcConfiguration: {
                         subnets: ['subnet1', 'subnet2'],
-                        assignPublicIp: 'DISABLED'
+                        assignPublicIp: 'ENABLED'
                     }
                 },
                 overrides: {
