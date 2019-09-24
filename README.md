@@ -49,9 +49,6 @@ The application is deployed as an [AWS CloudFormation](https://aws.amazon.com/cl
 > **Note**  
 You are responsible for the cost of the AWS services used while running this sample deployment. There is no additional cost for using this sample. For full details, see the pricing pages for each AWS service you will be using in this sample. Prices are subject to change.
 
-> **Note**   
-This template will deploy a Front-end layer that will contain some public S3 objects. _The deployment will fail if the Public Objects are blocked at an account level._
-
 1. Deploy the latest CloudFormation template by following the link below for your preferred AWS region:
 
 |Region|Launch Template|
@@ -73,6 +70,7 @@ This template will deploy a Front-end layer that will contain some public S3 obj
   * **RetryThreshold** (Default: 3) The number of times to retry transcription if an error is encountered.
   * **TaskName** (Default: transcriber) The Fargate taskname. You must customise this if you are already running a task with the same name.
   * **VpcIpBlock** (Default: 10.0.0.0/16) The CIDR block for the VPC. You must customise this if you are running other VPCs in the same AWS account.
+  * **CreateCloudFrontDistribution**  (Default: false) Creates a CloudFront distribution for accessing the web interface. _This must be enabled if S3 Block Public Access is enabled at an account level._ **Note:** Creating a CloudFront distribution may significantly increase the deploy time (from approximately 5 minutes to over 30 minutes)
 
    When completed, click *Next*
 1. [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html) if desired, then click *Next*.
