@@ -19,6 +19,7 @@ clicking on the link provided by the UI.
   * [Deployment](#deployment)
   * [Accessing the application](#accessing-the-application)
 * [Remove the application](#remove-the-application)
+* [Making changes to the code and customization](#making-changes-to-the-code-and-customization)
 * [Contributing](#contributing)
 
 ### Architecture
@@ -106,6 +107,10 @@ To remove the application:
 1. When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from the list.
 When it is done, the status will change from DELETE_IN_PROGRESS" to "DELETE_COMPLETE". It will then disappear from 
 the list.
+
+### Making changes to the code and customization
+
+The [contributing guidelines](CONTRIBUTING.md) contains some instructions about how to run the front-end locally and make changes to the back-end stack.
 
 ## Contributing
 

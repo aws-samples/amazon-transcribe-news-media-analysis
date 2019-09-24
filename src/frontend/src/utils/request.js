@@ -1,20 +1,12 @@
 import Amplify, { API } from "aws-amplify";
 
-const region = window.mediaAnalysisSettings.region || "eu-west-1";
+const settings = window.mediaAnalysisSettings || {};
+const region = settings.region || "eu-west-1";
 
 Amplify.configure({
-  Auth: {
-    identityPoolId: window.mediaAnalysisSettings.cognitoIdentityPool,
-    region
-  },
+  Auth: { identityPoolId: settings.cognitoIdentityPool, region },
   API: {
-    endpoints: [
-      {
-        name: "apiGateway",
-        endpoint: window.mediaAnalysisSettings.apiGateway,
-        region
-      }
-    ]
+    endpoints: [{ name: "apiGateway", endpoint: settings.apiGateway, region }]
   }
 });
 
