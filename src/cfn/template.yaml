@@ -52,8 +52,8 @@ Parameters:
       - "false"
 
 Outputs:
-  url:    
-    Value: !If 
+  url:
+    Value: !If
       - WithCloudFront
       - !Sub 'https://${CloudFrontDistribution.DomainName}'
       - !Sub 'https://${WebUIBucket.RegionalDomainName}/index.html'
@@ -986,11 +986,11 @@ Resources:
       Bucket: !Ref WebUIBucket
       PolicyDocument:
         Statement:
-        - Action: s3:GetObject
-          Effect: Allow
-          Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
-          Principal:
-            CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
 
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -1002,22 +1002,22 @@ Resources:
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Condition: WithCloudFront
-    Properties:       
+    Properties:
       DistributionConfig:
         Origins:
-        - DomainName: !GetAtt WebUIBucket.RegionalDomainName
-          Id: myS3Origin-MediaAnalysis
-          S3OriginConfig:
-            OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+          - DomainName: !GetAtt WebUIBucket.RegionalDomainName
+            Id: myS3Origin-MediaAnalysis
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
         Enabled: true
         HttpVersion: http2
         Comment: The Distribution for the Media Analysis Web UI
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           AllowedMethods:
-          - HEAD
-          - GET
-          - OPTIONS
+            - HEAD
+            - GET
+            - OPTIONS
           TargetOriginId: myS3Origin-MediaAnalysis
           ForwardedValues:
             QueryString: false
