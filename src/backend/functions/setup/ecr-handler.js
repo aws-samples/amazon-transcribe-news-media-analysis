@@ -1,11 +1,14 @@
 const { REPOSITORY } = process.env;
 
-module.exports = ecr => ({
-  removeImages: () =>
-    ecr
-      .listImages({ repositoryName: REPOSITORY })
-      .promise()
-      .then(r =>
+module.exports = ecr => {
+  const listImages = () =>
+    ecr.listImages({ repositoryName: REPOSITORY }).promise();
+
+  return {
+    getImageCount: () => listImages().then(r => r.imageIds.length),
+
+    removeImages: () =>
+      listImages().then(r =>
         r.imageIds.length > 0
           ? ecr
               .batchDeleteImage({
@@ -15,4 +18,5 @@ module.exports = ecr => ({
               .promise()
           : Promise.resolve()
       )
-});
+  };
+};

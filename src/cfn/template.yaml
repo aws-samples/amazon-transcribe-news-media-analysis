@@ -13,7 +13,7 @@ Globals:
     Runtime: nodejs10.x
     Environment:
       Variables:
-        VERSION: '0.15'
+        VERSION: '0.16'
 
 Parameters:
 
@@ -244,7 +244,7 @@ Resources:
           REGION: !Ref AWS::Region
           REPOSITORY: !Ref ECRRepository
           WEBUI_BUCKET: !Ref WebUIBucket
-      Timeout: 30
+      Timeout: 900
       Policies:
         - AWSLambdaBasicExecutionRole
         - Version: "2012-10-17"
