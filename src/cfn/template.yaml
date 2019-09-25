@@ -753,21 +753,21 @@ Resources:
               produces:
                 - application/json
               responses:
-                200:
+                "200":
                   description: 200 response
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
-                400:
+                "400":
                   description: 400 response
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
-                500:
+                "500":
                   description: 500 response
                   headers:
                     Access-Control-Allow-Origin:
@@ -785,7 +785,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
                       method.response.header.Access-Control-Allow-Origin: "'*'"
-                  200:
+                  "200":
                     statusCode: "200"
                     responseParameters:
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
@@ -829,8 +829,20 @@ Resources:
               responses:
                 "200":
                   description: 200 response
-                  schema:
-                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                "400":
+                  description: 400 response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                "500":
+                  description: 500 response
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
@@ -840,7 +852,17 @@ Resources:
                 credentials: !GetAtt DbWriteRole.Arn
                 uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
                 responses:
-                  default:
+                  4\d{2}:
+                    statusCode: "400"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                  5\d{2}:
+                    statusCode: "500"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                  "200":
                     statusCode: "200"
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
@@ -881,8 +903,20 @@ Resources:
               responses:
                 "200":
                   description: 200 response
-                  schema:
-                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                "400":
+                  description: 400 response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                "500":
+                  description: 500 response
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
@@ -892,7 +926,17 @@ Resources:
                 credentials: !GetAtt DbWriteRole.Arn
                 uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/UpdateItem
                 responses:
-                  default:
+                  4\d{2}:
+                    statusCode: "400"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                  5\d{2}:
+                    statusCode: "500"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                  "200":
                     statusCode: "200"
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
@@ -931,8 +975,20 @@ Resources:
               responses:
                 "200":
                   description: 200 response
-                  schema:
-                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                "400":
+                  description: 400 response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                "500":
+                  description: 500 response
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
@@ -942,7 +998,17 @@ Resources:
                 credentials: !GetAtt DbWriteRole.Arn
                 uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem
                 responses:
-                  default:
+                  4\d{2}:
+                    statusCode: "400"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                  5\d{2}:
+                    statusCode: "500"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                  "200":
                     statusCode: "200"
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin: "'*'"
