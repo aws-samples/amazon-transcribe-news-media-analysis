@@ -13,7 +13,7 @@ Globals:
     Runtime: nodejs10.x
     Environment:
       Variables:
-        VERSION: '0.16'
+        VERSION: '0.17'
 
 Parameters:
 
@@ -753,24 +753,43 @@ Resources:
               produces:
                 - application/json
               responses:
-                "200":
+                200:
                   description: 200 response
-                  schema:
-                    $ref: "#/definitions/Empty"
                   headers:
                     Access-Control-Allow-Origin:
                       type: string
                     Access-Control-Allow-Headers:
                       type: string
+                400:
+                  description: 400 response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                500:
+                  description: 500 response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - sigv4: []
               x-amazon-apigateway-integration:
                 credentials: !GetAtt DbReadRole.Arn
                 uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Scan
                 responses:
-                  default:
+                  4\d{2}:
+                    statusCode: "400"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                  200:
                     statusCode: "200"
                     responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
                     responseTemplates:
                       application/json: |
                         #set($inputRoot = $input.path('$'))
@@ -786,6 +805,13 @@ Resources:
                             #end
                          ]
                         }
+                  5\d{2}:
+                    statusCode: "500"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
                 requestTemplates:
                   application/json: !Sub |
                     {
@@ -793,11 +819,7 @@ Resources:
                       "ProjectionExpression": "MediaDescription, MediaTitle, MediaUrl, TaskStatus, TaskArn",
                       "ConsistentRead": true
                     }
-                passthroughBehavior: when_no_match
-                httpMethod: POST
                 type: aws
-              security:
-                - sigv4: []
           /tasks/{mediaUrl}:
             get:
               consumes:
