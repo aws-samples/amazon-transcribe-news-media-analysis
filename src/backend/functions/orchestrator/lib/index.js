@@ -77,7 +77,7 @@ const startTranscription = R.curry((ecs, {cluster, taskName, tasksTableName, med
        })
 });
 
-// startTranscription :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
+// updateWaiting :: ({k: v} -> Promise {k: v}) -> {k: v} -> Promise {k: v}
 const updateWaiting = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) => {
    const status = 'INITIALIZING';
 
@@ -102,12 +102,13 @@ const updateWaiting = R.curry((updateItem, {tasksTableName, mediaUrl, taskArn}) 
        .then(({Attributes}) => ({...Attributes, tasksTableName}))
 });
 
-// waiting :: AWS.ECS -> AWS.DynamoDB -> {k: v} -> String -> Promise {k:v}
+// waiting :: AWS.ECS -> ({k:v} -> Promise {k: v}) -> {k: v} -> Promise {k:v}
 const waiting = R.curry((ecs, updateItem) => composeP(updateWaiting(updateItem), startTranscription(ecs)));
 
 // terminating :: AWS.ECS -> {k: v} -> Promise {k:v}
 const terminating = stopTranscription;
 
+// createDeleteParams :: {k: v} -> {k: v}
 function createDeleteParams({mediaUrl, tasksTableName}) {
    return {
       TableName: tasksTableName,
@@ -120,6 +121,7 @@ function createDeleteParams({mediaUrl, tasksTableName}) {
 // terminated :: ({k:v} -> Promise {k: v}) -> {k: v} -> {k: v} -> Promise {k:v}
 const terminated = R.curry(deleteItem => o(deleteItem, createDeleteParams));
 
+// unrecoverableError :: ({k:v} -> Promise {k: v}) -> {k: v} -> Promise {k:v}
 const unrecoverableError = R.curry((updateItem, {tasksTableName, mediaUrl}) => {
    const params = {
       TableName: tasksTableName,
@@ -155,6 +157,7 @@ const error = R.curry((updateItem, {tasksTableName, mediaUrl}) => {
        .then(({Attributes}) => ({...Attributes, tasksTableName}))
 });
 
+// isUnrecoverableError :: Number -> Number -> String -> Boolean
 function isUnrecoverableError(retries, retryThreshold, taskStatus) {
    return retries > retryThreshold && !R.includes(taskStatus, ['TERMINATING', 'TERMINATED']);
 }
@@ -213,9 +216,5 @@ module.exports = (ecs, ddb, env) => {
              return stop.then(() => unrecoverableError(update, {tasksTableName, mediaUrl}));
           }))
           .then(promises => Promise.all(promises))
-          // this is temporary but important to remember that any uncaught DynamoDb stream errors block
-          // the queue for 24 hrs. We will allow the error handling promises here to crash the lambda
-          // because something has really gone wrong in this case.
-          .catch(x => console.log(x));
    };
 };
