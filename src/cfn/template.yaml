@@ -13,7 +13,7 @@ Globals:
     Runtime: nodejs10.x
     Environment:
       Variables:
-        VERSION: '1.2'
+        VERSION: '1.3'
 
 Parameters:
 
@@ -629,8 +629,12 @@ Resources:
             Principal:
               Federated:
                 - cognito-identity.amazonaws.com
-            Action:
-              - sts:AssumeRoleWithWebIdentity
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                "cognito-identity.amazonaws.com:aud": !Ref CognitoIdentityPool
+              ForAnyValue:StringLike:
+                "cognito-identity.amazonaws.com:amr": "unauthenticated"
 
   CognitoIdentityPool:
     Type: AWS::Cognito::IdentityPool
