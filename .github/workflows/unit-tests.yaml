@@ -38,10 +38,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 12
-      - name: Install virtualenv
-        run: pip install virtualenv
       - name: Install dependencies
-        run: make setup
+        run: npm i
+      - name: Install python dependencies
+        run: pip3 install -r requirements.txt
+      - name: Build Template
+        run: npm run build
       # Run Tests
       - name: Unit tests
         run: npm test
