@@ -2,8 +2,6 @@
 
 Transcribe news audio in realtime
 
-[![Build Status](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis.svg?branch=master)](https://travis-ci.org/aws-samples/amazon-transcribe-news-media-analysis)
-
 This solution allows you to create transcriptions of live streaming video using AWS Transcribe. The application 
 consists of a Web UI where the user may submit URLs of videos for processing, which in turn creates an ECS task per URL
 running in Fargate to begin the transcription. A user can then view the video and follow the text in real time by 
