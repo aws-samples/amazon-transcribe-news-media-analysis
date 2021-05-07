@@ -10,7 +10,7 @@ Globals:
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       AllowOrigin: "'*'"
   Function:
-    Runtime: nodejs10.x
+    Runtime: nodejs14.x
     Environment:
       Variables:
         VERSION: '1.6'
@@ -271,7 +271,7 @@ Resources:
       Description: Latest confirmed compatible AWS SDK
       ContentUri: ../backend/functions/layers/aws_sdk/
       CompatibleRuntimes:
-        - nodejs10.x
+        - nodejs14.x
         - nodejs12.x
 
   FPLayer:
@@ -281,7 +281,7 @@ Resources:
       Description: Layer containing functional programming libs
       ContentUri: ../backend/functions/layers/fp/
       CompatibleRuntimes:
-        - nodejs10.x
+        - nodejs14.x
         - nodejs12.x
 
   Orchestrator:
