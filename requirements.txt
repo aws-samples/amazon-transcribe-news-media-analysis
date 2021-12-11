@@ -1,5 +1,5 @@
 aws-sam-translator==1.36.0
 awscli==1.19.88
 cfn_flip==1.2.3
-cfn_lint==0.50.0
+cfn_lint==0.56.3
 yamllint==1.26.1
