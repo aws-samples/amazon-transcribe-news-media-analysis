@@ -3,3 +3,4 @@ awscli==1.19.88
 cfn_flip==1.2.3
 cfn_lint==0.56.3
 yamllint==1.26.1
+networkx==2.6.3
