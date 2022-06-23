@@ -13,6 +13,6 @@
     "unzipper": "0.10.5"
   },
   "devDependencies": {
-    "aws-sdk": "2.369.0"
+    "aws-sdk": "^2.1160.0"
   }
 }
